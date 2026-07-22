@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>物流轨迹中心 · ERP 原型初稿</title>
+  <link rel="stylesheet" href="../../ui-library/tokens.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="c-shell" data-collapsed="false" data-component="ErpShell">
+    <aside class="c-shell__sider" aria-label="主导航">
+      <div class="c-shell__brand">
+        <span class="c-shell__brand-logo">E</span>
+        <span class="c-shell__brand-text">跨境电商 ERP</span>
+      </div>
+      <ul class="c-shell__menu" role="menu">
+        <li class="c-shell__menu-group">订单履约</li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▣</span><span>订单列表</span></li>
+        <li class="c-shell__menu-item c-shell__menu-item--active" role="menuitem"><span class="c-shell__menu-icon">⌁</span><span>物流轨迹</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▤</span><span>包裹列表</span></li>
+        <li class="c-shell__menu-group">售后管理</li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">↩</span><span>退件处理</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">¥</span><span>退款任务</span></li>
+        <li class="c-shell__menu-group">报表与设置</li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▥</span><span>物流报表</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">⚙</span><span>系统设置</span></li>
+      </ul>
+    </aside>
+
+    <header class="c-shell__header">
+      <span class="c-shell__collapse-btn" title="折叠侧栏" data-action="collapse">≡</span>
+      <div class="c-shell__header-search">
+        <span class="c-shell__header-search-icon">⌕</span>
+        <input class="input" placeholder="搜索菜单、订单号、SKU" aria-label="全局搜索" />
+      </div>
+      <div class="c-shell__header-actions">
+        <span class="c-shell__icon-btn" title="帮助">?</span>
+        <span class="c-shell__icon-btn" title="通知">♢</span>
+        <div class="c-shell__avatar" title="当前用户">F</div>
+      </div>
+    </header>
+
+    <nav class="c-shell__crumb" aria-label="面包屑">
+      <a href="#">工作台</a><span class="c-shell__crumb-sep">/</span>
+      <a href="#">订单履约</a><span class="c-shell__crumb-sep">/</span>
+      <span class="c-shell__crumb-current">物流轨迹中心</span>
+    </nav>
+
+    <main class="c-shell__content">
+      <header class="c-page-header" data-component="PageHeaderBar">
+        <div class="c-page-header__left">
+          <h1 class="c-page-header__title">物流轨迹中心 <span class="c-page-header__title-extra">包裹监控与异常定位</span></h1>
+          <p class="c-page-header__desc">统一查看正向发货和逆向退件轨迹；原始承运商状态已归一为业务节点。</p>
+        </div>
+        <div class="c-page-header__actions">
+          <span class="sync-status">最后同步：2026-07-22 10:18</span>
+          <button class="btn" data-action="sync">↻ 同步轨迹</button>
+          <button class="btn btn--outlined btn--color-primary" data-action="export">导出</button>
+        </div>
+      </header>
+
+      <section class="direction-bar surface-panel" aria-label="物流方向">
+        <div class="direction-bar__label">物流方向</div>
+        <div class="segmented" role="group" aria-label="物流方向切换">
+          <button class="c-segmented__item segmented__item is-active" data-direction="forward">正向物流 <span class="segmented__count">609,716</span></button>
+          <button class="c-segmented__item segmented__item" data-direction="reverse">逆向物流 <span class="segmented__count">30</span></button>
+        </div>
+        <div class="direction-bar__hint">正向与逆向节点状态独立展示</div>
+      </section>
+
+      <section class="c-filter" data-component="QueryFilterBar" data-expanded="false">
+        <div class="c-filter__row">
+          <div class="c-filter__field">
+            <span class="c-filter__label">仓库</span>
+            <div class="ui-select" data-select="warehouse"><span>请选择仓库</span><b>⌄</b></div>
+          </div>
+          <div class="c-filter__field">
+            <span class="c-filter__label">平台</span>
+            <div class="ui-select" data-select="platform"><span>全部平台</span><b>⌄</b></div>
+          </div>
+          <div class="c-filter__field">
+            <span class="c-filter__label">目的国家</span>
+            <div class="ui-select" data-select="country"><span>全部国家</span><b>⌄</b></div>
+          </div>
+          <div class="c-filter__field">
+            <span class="c-filter__label">物流商</span>
+            <div class="ui-select" data-select="carrier"><span>全部物流商</span><b>⌄</b></div>
+          </div>
+          <div class="c-filter__field">
+            <span class="c-filter__label">物流渠道</span>
+            <div class="ui-select" data-select="channel"><span>全部物流渠道</span><b>⌄</b></div>
+          </div>
+          <div class="c-filter__field c-filter__field--search">
+            <span class="c-filter__label">平台单号</span>
+            <div class="code-search-control"><div class="ui-select" data-select="codeType"><span>平台单号</span><b>⌄</b></div><input class="input" id="keywordInput" placeholder="请输入" /></div>
+          </div>
+          <div class="c-filter__field c-filter__field--date">
+            <span class="c-filter__label">交运时间</span>
+            <div class="date-range"><span>2026-07-15</span><i>→</i><span>2026-07-22</span><b>▣</b></div>
+          </div>
+          <div class="c-filter__actions">
+            <button class="btn btn--primary" data-action="search">查询</button>
+            <button class="btn" data-action="reset">重置</button>
+          </div>
+        </div>
+        <div class="c-filter__chips" id="filterChips" hidden></div>
+      </section>
+
+      <section class="status-panel surface-panel">
+        <div class="status-panel__head">
+          <div class="status-tabs" role="tablist" aria-label="物流状态" id="statusTabs"></div>
+          <span class="result-note" id="resultNote">共 609,716 条</span>
+        </div>
+        <div class="status-subfilters" id="statusSubfilters" hidden></div>
+      </section>
+
+      <section class="c-table-panel surface-panel" data-component="DataTablePanel">
+        <div class="table-toolbar">
+          <div class="table-toolbar__left"><strong>包裹列表</strong><span class="text-tertiary">点击包裹号查看原页面“物流轨迹”弹窗，并扩展查看逆向轨迹</span></div>
+          <div class="table-toolbar__right"><button class="btn btn--sm btn--color-primary" data-action="remark-batch">批量修改备注</button><button class="btn btn--sm" data-action="import">导入</button><button class="btn btn--sm" data-action="export-menu">数据导出⌄</button><button class="btn btn--sm" data-action="column-setting">列设置</button><button class="btn btn--sm" data-action="refresh">刷新</button></div>
+        </div>
+        <div class="table-scroll">
+          <table class="c-table" aria-label="物流包裹列表">
+            <thead id="tableHead"></thead>
+            <tbody id="parcelRows"></tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="paginationTotal">共 609,716 条</span><div class="pagination"><span class="page-size">20 条/页⌄</span><span class="page-btn is-disabled">‹</span><span class="page-btn is-current">1</span><span class="page-btn">2</span><span class="page-btn">3</span><span class="page-btn">›</span></div></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <div class="c-drawer-mask" data-action="close-drawer"></div>
+  <aside class="c-drawer" data-open="false" data-component="DetailDrawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+    <div class="c-drawer__head">
+      <div><h2 class="c-drawer__title" id="drawerTitle">包裹轨迹详情</h2><div class="drawer-subtitle" id="drawerSubtitle">—</div></div>
+      <span class="c-drawer__close" data-action="close-drawer" title="关闭">×</span>
+    </div>
+    <div class="c-drawer__meta" id="drawerMeta"></div>
+    <nav class="c-drawer__tabs" id="drawerTabs" role="tablist">
+      <span class="c-drawer__tab is-active" data-drawer-tab="forward" aria-selected="true">正向轨迹</span>
+      <span class="c-drawer__tab" data-drawer-tab="reverse" aria-selected="false">逆向轨迹</span>
+      <span class="c-drawer__tab" data-drawer-tab="basic" aria-selected="false">包裹信息</span>
+    </nav>
+    <div class="c-drawer__body" id="drawerBody"></div>
+    <footer class="c-drawer__foot"><button class="btn" data-action="close-drawer">关闭</button><button class="btn btn--outlined btn--color-primary" data-action="copy-no">复制运单号</button><button class="btn btn--primary" data-action="drawer-action">查看处理任务</button></footer>
+  </aside>
+
+  <script src="script.js"></script>
+</body>
+</html>
