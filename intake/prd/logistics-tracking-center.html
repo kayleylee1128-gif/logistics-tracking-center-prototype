@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>物流轨迹中心与物流规则改造 PRD</title>
+  <style>
+    :root{--ink:#1f2937;--muted:#667085;--line:#e5e7eb;--bg:#f5f7fa;--blue:#1677ff;--blue-bg:#eaf3ff;--warn:#d48806;--warn-bg:#fffbe6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}.page{max-width:1200px;margin:auto;padding:28px 20px 64px}.hero,nav,section{background:#fff;border:1px solid var(--line);border-radius:10px}.hero{padding:26px 30px;margin-bottom:14px}h1{margin:0;font-size:28px;line-height:1.3}h2{margin:0 -30px 16px;padding:14px 30px;border-bottom:1px solid var(--line);font-size:20px;line-height:1.4}h3{margin:20px 0 8px;font-size:16px}.subtitle{margin-top:8px;color:var(--muted);font-size:16px}.meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;color:var(--muted)}.badge{color:var(--blue);background:var(--blue-bg);border-radius:999px;padding:1px 9px}.notice{margin-top:16px;border-left:3px solid var(--blue);padding:8px 12px;background:var(--blue-bg)}nav{padding:9px 14px;margin-bottom:14px;position:sticky;top:8px;z-index:2}nav a{color:var(--blue);text-decoration:none;margin-right:14px;white-space:nowrap}section{padding:0 30px 24px;margin:14px 0}p{margin:8px 0}ul{margin:8px 0;padding-left:22px}table{width:100%;border-collapse:collapse;margin:9px 0 14px}th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:#f8fafc;white-space:nowrap;font-weight:600}code{background:#f1f5f9;padding:1px 4px;border-radius:3px}pre{white-space:pre-wrap;overflow:auto;background:#f8fafc;border:1px solid var(--line);border-radius:7px;padding:12px 14px;font:12px/1.55 Consolas,monospace}.muted{color:var(--muted)}.priority{white-space:nowrap;color:var(--blue);font-weight:600}.warning{color:var(--warn);background:var(--warn-bg);padding:8px 12px;border-radius:6px}@media(max-width:760px){.page{padding:10px 8px 40px}.hero,section{padding-left:14px;padding-right:14px}h2{margin-left:-14px;margin-right:-14px;padding-left:14px}nav{position:static}table{display:block;overflow:auto;font-size:12px}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <header class="hero">
+    <h1>物流轨迹中心与物流规则改造 PRD</h1>
+    <div class="subtitle">统一查询正向/逆向物流，独立维护轨迹关键词归类规则</div>
+    <div class="meta"><span>版本：V1.2</span><span class="badge">评审稿</span><span>评审日期：2026-07-23</span><span>目标终端：B 端 ERP Web</span></div>
+    <div class="notice">本需求对应两个页面：物流轨迹中心负责查询与查看轨迹；物流规则负责维护通用轨迹识别规则。通用轨迹配置不得出现在物流轨迹中心模块内。</div>
+  </header>
+
+  <nav>
+    <a href="#overview">1.概述</a><a href="#scope">2.页面范围</a><a href="#flow">3.流程</a><a href="#center">4.轨迹中心</a><a href="#rules">5.物流规则</a><a href="#data">6.数据与状态</a><a href="#permission">7.权限与异常</a><a href="#ui">8.UI与原型</a><a href="#acceptance">9.验收</a><a href="#open">10.待确认</a>
+  </nav>
+
+  <section id="overview">
+    <h2>1. 需求概述</h2>
+    <h3>1.1 背景</h3>
+    <p>现有物流页面以正向物流列表为主，正向发货、逆向退件和异常轨迹的展示口径不一致。物流运营、客服和退件仓需要在稳定的 ERP 列表工作区内完成查询、异常定位和轨迹查看。</p>
+    <h3>1.2 目标</h3>
+    <table><tr><th>目标</th><th>说明</th><th>优先级</th></tr><tr><td>统一查询</td><td>在物流轨迹中心切换正向物流和逆向物流，分别展示对应状态与字段。</td><td class="priority">P0</td></tr><tr><td>异常归类</td><td>承运商原始轨迹归一为业务节点；正向派送失败、丢件、破损等归入“包裹异常”。</td><td class="priority">P0</td></tr><tr><td>规则维护</td><td>将“丢件”“派送失败”等通用关键词配置迁移到独立物流规则页面。</td><td class="priority">P0</td></tr><tr><td>降低跳转</td><td>包裹详情使用右侧 Drawer，不为查看轨迹新增独立页面。</td><td class="priority">P0</td></tr></table>
+    <h3>1.3 非目标</h3>
+    <ul><li>不在物流轨迹中心增加通用轨迹配置按钮、弹窗或配置面板。</li><li>不在本期实现退件入库、质检、退款、理赔、售后审批页面。</li><li>不改变承运商原始轨迹，不将技术堆栈直接展示给业务用户。</li><li>不新增角色切换器、页面状态切换器或调试面板。</li></ul>
+  </section>
+
+  <section id="scope">
+    <h2>2. 页面范围与边界</h2>
+    <table><tr><th>页面</th><th>线上参考路径</th><th>主任务</th><th>本期范围</th></tr><tr><td>物流轨迹中心</td><td><code>/yh-logistics/logisticsTrajectory</code></td><td>查询包裹、定位异常、查看正向/逆向轨迹</td><td>方向切换、状态筛选、条件查询、列表、详情 Drawer、同步/导出/备注反馈</td></tr><tr><td>物流规则</td><td><code>/yh-logistics/logisticsRules</code></td><td>维护轨迹关键词与业务状态的归类规则</td><td>规则列表、关键词筛选、编辑抽屉、保存规则、规则更新时间</td></tr></table>
+    <div class="warning">明确边界：物流轨迹中心只消费规则结果，不提供规则编辑入口；物流规则页面只维护识别规则，不承担包裹查询和轨迹详情查看。</div>
+  </section>
+
+  <section id="flow">
+    <h2>3. 核心流程</h2>
+    <pre>flowchart LR
+  A[进入物流轨迹中心] --> B{选择方向}
+  B -->|正向| C[选择正向状态/二级筛选]
+  B -->|逆向| D[选择逆向状态/退回类型]
+  C --> E[设置查询条件]
+  D --> E
+  E --> F[查询包裹列表]
+  F --> G[打开轨迹详情 Drawer]
+  F --> H[同步/导出/备注]
+  I[进入物流规则] --> J[筛选规则]
+  J --> K[编辑关键词]
+  K --> L[保存规则]
+  L --> M[影响后续轨迹识别]</pre>
+    <p class="muted">规则保存不回溯历史轨迹结果；历史数据仍按原识别结果展示。</p>
+  </section>
+
+  <section id="center">
+    <h2>4. 物流轨迹中心需求</h2>
+    <h3>4.1 页面结构</h3>
+    <table><tr><th>区域</th><th>要求</th><th>组件映射</th></tr><tr><td>ERP 壳层</td><td>左侧导航、顶部搜索、帮助、通知、用户信息、面包屑。</td><td>ErpShell / Layout</td></tr><tr><td>页面标题</td><td>标题为“物流轨迹中心”，说明包裹监控与异常定位；右侧保留同步轨迹、导出。</td><td>PageHeaderBar</td></tr><tr><td>物流方向</td><td>仅提供正向物流、逆向物流两个 Segment，计数以后端为准。</td><td>Segmented</td></tr><tr><td>筛选区</td><td>仓库、平台、目的国家、物流商、物流渠道、平台单号、交运时间；支持查询和重置。</td><td>QueryFilterBar</td></tr><tr><td>状态区</td><td>一级状态 Tab；存在二级语义时在 Tab 下方展开筛选。</td><td>Tabs / Tag</td></tr><tr><td>列表区</td><td>紧凑表格、分页、批量操作、固定操作列；点击包裹号或“查看轨迹”打开 Drawer。</td><td>DataTablePanel</td></tr><tr><td>详情区</td><td>展示正向轨迹、逆向轨迹、包裹信息；底部操作区固定。</td><td>DetailDrawer / Timeline</td></tr></table>
+    <h3>4.2 正向物流状态</h3>
+    <table><tr><th>一级状态</th><th>二级筛选</th><th>规则</th></tr><tr><td>全部</td><td>—</td><td>展示全部正向包裹。</td></tr><tr><td>未上网</td><td>—</td><td>已交运但未收到有效首条轨迹。</td></tr><tr><td>已上网</td><td>—</td><td>已收到首条有效承运商轨迹。</td></tr><tr><td>已交航</td><td>—</td><td>已确认交航/干线运输。</td></tr><tr><td>已到达目的国</td><td>—</td><td>已收到目的国到达节点。</td></tr><tr><td>已签收</td><td>—</td><td>已收到签收节点。</td></tr><tr><td>包裹异常</td><td>查不到轨迹、派送失败、丢件、破损、轨迹同步失败</td><td>异常原因在列表最新轨迹信息与详情中展示。</td></tr><tr><td>退回</td><td>退回中、退回签收、包裹异常</td><td>“退回破损丢件”统一展示为“包裹异常”；只跟踪原包裹退回轨迹，不提供退回类型。</td></tr></table>
+    <h3>4.3 逆向物流状态</h3>
+    <table><tr><th>一级状态</th><th>二级筛选</th><th>字段要求</th></tr><tr><td>全部</td><td>退回类型：全部、原包裹退回、客户退回</td><td>展示全部逆向包裹。</td></tr><tr><td>退回中</td><td>退回类型</td><td>展示逆向运输中的包裹。</td></tr><tr><td>已签收</td><td>退回类型</td><td>展示退件仓已签收包裹。</td></tr><tr><td>包裹异常</td><td>退回类型</td><td>异常类型包含妥投失败、破损丢件；异常标签统一为“包裹异常”。</td></tr></table>
+    <h3>4.4 列表字段</h3>
+    <table><tr><th>正向列表</th><th>逆向列表</th></tr><tr><td>仓库、平台、物流商、渠道、国家、平台单号、包裹号、物流单号、物流跟踪号、最新轨迹信息、揽收时间、交运时间、上网时间、交航时间、到达目的国时间、签收时间、签收时效、备注、操作。</td><td>仓库、平台、物流商、渠道、国家、平台单号、物流单号、当前节点、包裹异常类型、退回时间、签收时间、备注、操作。</td></tr></table>
+    <h3>4.5 交互与反馈</h3>
+    <table><tr><th>动作</th><th>交互要求</th><th>反馈</th></tr><tr><td>查询/重置</td><td>查询保留当前方向；重置清空关键词并恢复默认状态。</td><td>列表刷新，空结果保留筛选条件。</td></tr><tr><td>查看轨迹</td><td>打开右侧 Drawer，支持正向轨迹、逆向轨迹、包裹信息 Tab。</td><td>支持 ESC、遮罩和关闭按钮关闭。</td></tr><tr><td>同步/重试</td><td>提交异步任务；不向业务用户展示技术堆栈。</td><td>成功/失败 Message 或 Notification。</td></tr><tr><td>备注</td><td>300 字以内，失焦保存；仅有权限时可编辑。</td><td>保存成功提示；失败时保留原值。</td></tr></table>
+  </section>
+
+  <section id="rules">
+    <h2>5. 物流规则需求</h2>
+    <h3>5.1 页面目标</h3>
+    <p>在独立的物流规则页面维护轨迹原文与业务状态的归类规则，避免配置能力和包裹查询能力混在同一个模块中。</p>
+    <h3>5.2 页面功能</h3>
+    <table><tr><th>功能</th><th>要求</th><th>优先级</th></tr><tr><td>规则列表</td><td>展示规则名称、规则类型、匹配关键词、归类状态、启用状态、最近更新时间、操作人。</td><td class="priority">P0</td></tr><tr><td>规则筛选</td><td>支持按规则名称或关键词查询，支持重置。</td><td class="priority">P0</td></tr><tr><td>编辑规则</td><td>点击“编辑”打开右侧 Drawer，维护关键词；中文逗号、英文逗号和换行均可分隔。</td><td class="priority">P0</td></tr><tr><td>保存规则</td><td>至少保留一个关键词；保存后更新时间和操作人刷新。</td><td class="priority">P0</td></tr></table>
+    <h3>5.3 初始规则</h3>
+    <table><tr><th>规则名称</th><th>匹配关键词示例</th><th>归类结果</th></tr><tr><td>丢件</td><td>丢件、包裹丢失、无法找回、package lost、lost parcel</td><td>包裹异常</td></tr><tr><td>派送失败</td><td>派送失败、投递失败、delivery failed、unable to deliver</td><td>包裹异常</td></tr></table>
+    <h3>5.4 页面边界</h3>
+    <ul><li>物流规则页面不展示包裹列表和轨迹详情。</li><li>规则变更只影响后续轨迹识别，历史结果不回溯。</li><li>新增规则、启停规则和删除规则的正式权限与流程待确认；本期原型只覆盖已有规则编辑。</li></ul>
+  </section>
+
+  <section id="data">
+    <h2>6. 数据与状态定义</h2>
+    <table><tr><th>字段</th><th>类型</th><th>说明</th></tr><tr><td><code>direction</code></td><td>enum</td><td><code>forward</code> 正向；<code>reverse</code> 逆向。</td></tr><tr><td><code>status</code></td><td>enum</td><td>按方向返回一级业务节点；前端不直接修改状态。</td></tr><tr><td><code>returnStage</code></td><td>enum</td><td>正向退回节点：退回中、退回签收、包裹异常。</td></tr><tr><td><code>exceptionType</code></td><td>enum</td><td>正向：查不到轨迹、派送失败、丢件、破损、轨迹同步失败；逆向：妥投失败、破损丢件。</td></tr><tr><td><code>returnType</code></td><td>enum</td><td>仅逆向使用：原包裹退回、客户退回。</td></tr><tr><td><code>keywordConfig</code></td><td>object</td><td>物流规则页面维护的关键词集合，不在轨迹中心编辑。</td></tr><tr><td><code>rawDescription</code></td><td>string</td><td>承运商原始描述，只读展示或详情展开，不覆盖标准节点。</td></tr></table>
+    <h3>6.1 状态流转</h3>
+    <pre>已交运 → 未上网 → 已上网 → 已交航 → 已到达目的国 → 已签收
+任意未终态 → 轨迹同步失败 → 重试成功后恢复原状态
+任意状态 → 退回 → 退回中 / 退回签收 / 包裹异常
+退回中 → 逆向退回中 → 逆向已签收 / 逆向包裹异常</pre>
+  </section>
+
+  <section id="permission">
+    <h2>7. 权限、异常与审计</h2>
+    <table><tr><th>能力</th><th>物流运营</th><th>客服</th><th>管理员</th><th>说明</th></tr><tr><td>查询/查看详情</td><td>✓</td><td>✓</td><td>✓</td><td>按仓库、店铺、组织数据权限过滤。</td></tr><tr><td>同步/重试</td><td>✓</td><td>—</td><td>✓</td><td>需频控、幂等和操作日志。</td></tr><tr><td>备注编辑</td><td>✓</td><td>按权限</td><td>✓</td><td>记录修改前后内容和操作人。</td></tr><tr><td>物流规则编辑</td><td>按配置权限</td><td>—</td><td>✓</td><td>只在物流规则页面出现。</td></tr><tr><td>导出</td><td>✓</td><td>按权限</td><td>✓</td><td>大数据量使用异步任务。</td></tr></table>
+    <table><tr><th>异常场景</th><th>系统行为</th><th>用户提示</th></tr><tr><td>轨迹同步失败</td><td>隐藏技术堆栈，保留业务化异常状态。</td><td>轨迹同步失败，可重试。</td></tr><tr><td>查询无结果</td><td>保留筛选条件，不清空用户输入。</td><td>未找到符合条件的包裹，请调整筛选条件。</td></tr><tr><td>规则关键词为空</td><td>阻止保存，Drawer 保持打开。</td><td>请至少保留一个匹配关键词。</td></tr><tr><td>无权限</td><td>隐藏或禁用对应操作入口。</td><td>暂无此操作权限。</td></tr></table>
+  </section>
+
+  <section id="ui">
+    <h2>8. UI 与原型约束</h2>
+    <table><tr><th>维度</th><th>要求</th></tr><tr><td>视觉基线</td><td>中文 B 端 ERP；浅灰布局背景、白色面板、紧凑表格、克制圆角和阴影。</td></tr><tr><td>组件</td><td>ErpShell、PageHeaderBar、QueryFilterBar、DataTablePanel、DetailDrawer、Tabs、Segmented、Tag、Timeline。</td></tr><tr><td>按钮</td><td>按新版语义使用 <code>color + variant</code> 组合；主操作使用实心主色按钮。</td></tr><tr><td>状态</td><td>标签必须使用 <code>.tag</code> 与 <code>.tag--*</code>；不能只依赖颜色表达状态。</td></tr><tr><td>禁止</td><td>不使用原生 select、浏览器 alert、营销型指标卡、角色切换器、调试面板。</td></tr><tr><td>原型文件</td><td><a href="../../prototype/logistics-tracking-center/index.html">物流轨迹中心</a>；<a href="../../prototype/logistics-rules/index.html">物流规则</a>。</td></tr></table>
+  </section>
+
+  <section id="acceptance">
+    <h2>9. 验收标准</h2>
+    <ol><li>物流轨迹中心不出现“通用轨迹配置”按钮、弹窗或配置表单。</li><li>物流规则页面可展示丢件、派送失败两条规则，并可打开编辑 Drawer。</li><li>规则关键词支持中文逗号、英文逗号和换行分隔，至少保留一个关键词才能保存。</li><li>正向物流一级状态包含“退回”；其二级节点为“退回中、退回签收、包裹异常”，不再展示“退回破损丢件”。</li><li>正向物流“包裹异常”二级类型包含查不到轨迹、派送失败、丢件、破损、轨迹同步失败。</li><li>逆向物流一级状态包含退回中、已签收、包裹异常；退回类型包含原包裹退回、客户退回。</li><li>正向/逆向切换、查询、重置、详情 Drawer、ESC/遮罩关闭均可用。</li><li>页面无控制台错误，样式守卫和脚本语法检查通过。</li></ol>
+  </section>
+
+  <section id="open">
+    <h2>10. 待确认事项</h2>
+    <table><tr><th>问题</th><th>影响</th><th>默认假设</th></tr><tr><td>物流规则是否支持新增、停用和删除</td><td>页面操作和权限模型</td><td>本期只编辑已有规则。</td></tr><tr><td>规则变更是否需要审批</td><td>保存流程与审计</td><td>本期保存即生效，历史结果不回溯。</td></tr><tr><td>状态计数和规则命中数量接口</td><td>列表统计与规则页数据</td><td>由后端返回，前端不自行推算。</td></tr><tr><td>同步、导出是否采用任务中心</td><td>异步反馈方式</td><td>原型先展示 Message/Notification 结构。</td></tr><tr><td>数据权限按仓库、店铺还是组织</td><td>查询接口过滤</td><td>沿用现有物流模块权限。</td></tr></table>
+  </section>
+</main>
+</body>
+</html>

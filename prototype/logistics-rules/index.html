@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="default">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>物流规则</title>
+  <link rel="stylesheet" href="./tokens.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="c-shell" data-collapsed="false">
+    <aside class="c-shell__sider" aria-label="主导航">
+      <div class="c-shell__brand"><span class="c-shell__brand-logo">E</span><span class="c-shell__brand-text">跨境电商 ERP</span></div>
+      <ul class="c-shell__menu" role="menu">
+        <li class="c-shell__menu-group">订单履约</li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▣</span><span>订单列表</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">⌁</span><span>物流轨迹</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▤</span><span>包裹列表</span></li>
+        <li class="c-shell__menu-group">物流配置</li>
+        <li class="c-shell__menu-item c-shell__menu-item--active" role="menuitem"><span class="c-shell__menu-icon">⚙</span><span>物流规则</span></li>
+        <li class="c-shell__menu-group">售后管理</li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">↩</span><span>退件处理</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">¥</span><span>退款任务</span></li>
+      </ul>
+    </aside>
+
+    <header class="c-shell__header">
+      <button class="c-shell__collapse-btn" type="button" title="折叠侧栏" data-action="collapse" aria-label="折叠侧栏">≡</button>
+      <div class="c-shell__header-search"><span class="c-shell__header-search-icon">⌕</span><input class="input" placeholder="搜索菜单、订单号、SKU" aria-label="全局搜索" /></div>
+      <div class="c-shell__header-actions"><button class="c-shell__icon-btn" type="button" title="帮助" aria-label="帮助">?</button><button class="c-shell__icon-btn" type="button" title="通知" aria-label="通知">♢</button><div class="c-shell__avatar">F</div></div>
+    </header>
+
+    <nav class="c-shell__crumb" aria-label="面包屑"><a href="#">工作台</a><span class="c-shell__crumb-sep">/</span><a href="#">物流管理</a><span class="c-shell__crumb-sep">/</span><span class="c-shell__crumb-current">物流规则</span></nav>
+
+    <main class="c-shell__content">
+      <header class="c-page-header">
+        <div class="c-page-header__left"><h1 class="c-page-header__title">物流规则</h1><p class="c-page-header__desc">维护轨迹原文与业务状态的归类规则，保存后影响后续轨迹识别。</p></div>
+        <div class="c-page-header__actions"><span class="sync-status">最后更新：2026-07-22 10:18</span><button class="btn btn--solid btn--color-primary" data-action="new-rule">新增规则</button></div>
+      </header>
+
+      <section class="c-filter surface-panel" data-component="QueryFilterBar">
+        <div class="c-filter__row">
+          <label class="c-filter__field"><span class="c-filter__label">规则类型</span><div class="ui-select" data-filter="type"><span>全部类型</span><b>⌄</b></div></label>
+          <label class="c-filter__field"><span class="c-filter__label">状态</span><div class="ui-select" data-filter="status"><span>全部状态</span><b>⌄</b></div></label>
+          <label class="c-filter__field c-filter__field--search"><span class="c-filter__label">规则名称 / 关键词</span><input class="input" id="keywordInput" placeholder="请输入规则名称或关键词" /></label>
+          <div class="c-filter__actions"><button class="btn btn--solid btn--color-primary" data-action="search">查询</button><button class="btn" data-action="reset">重置</button></div>
+        </div>
+      </section>
+
+      <section class="surface-panel c-table-panel" data-component="DataTablePanel">
+        <div class="table-toolbar"><div class="table-toolbar__left"><strong>规则列表</strong><span class="text-tertiary" id="resultNote">共 2 条规则</span></div><div class="table-toolbar__right"><button class="btn btn--sm" data-action="refresh">刷新</button></div></div>
+        <div class="table-scroll">
+          <table class="c-table" aria-label="物流规则列表"><thead><tr><th>规则名称</th><th>规则类型</th><th>匹配关键词</th><th>归类状态</th><th>状态</th><th>最近更新</th><th>操作</th></tr></thead><tbody id="ruleRows"></tbody></table>
+        </div>
+        <div class="table-footer"><span>规则仅影响后续同步的轨迹，不回溯历史结果</span><div class="pagination"><span class="page-btn is-current">1</span></div></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <div class="c-drawer-mask" data-action="close-drawer"></div>
+  <aside class="c-drawer" data-open="false" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+    <div class="c-drawer__head"><div><h2 class="c-drawer__title" id="drawerTitle">编辑物流规则</h2><div class="drawer-subtitle" id="drawerSubtitle">—</div></div><button class="c-drawer__close" type="button" data-action="close-drawer" aria-label="关闭">×</button></div>
+    <div class="c-drawer__body" id="drawerBody"></div>
+    <footer class="c-drawer__foot"><button class="btn" data-action="close-drawer">取消</button><button class="btn btn--solid btn--color-primary" data-action="save-rule">保存规则</button></footer>
+  </aside>
+  <script src="script.js"></script>
+</body>
+</html>
