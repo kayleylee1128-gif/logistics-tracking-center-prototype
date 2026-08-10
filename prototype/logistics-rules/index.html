@@ -61,8 +61,25 @@
   <div class="c-modal-mask" data-open="false" data-action="close-common-rules"></div>
   <section class="c-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="commonRulesTitle">
     <header class="c-modal__head"><div><h2 class="c-modal__title" id="commonRulesTitle">通用规则配置</h2><p class="c-modal__subtitle">查看通用节点与轨迹关键词的归类关系</p></div><button class="c-modal__close" type="button" data-action="close-common-rules" aria-label="关闭">×</button></header>
-    <div class="c-modal__body"><aside class="common-rule-nav" id="commonRuleNav"></aside><div class="common-rule-detail" id="commonRuleDetail"></div></div>
-    <footer class="c-modal__foot"><span class="modal-readonly">只读查看 · 配置变更请走规则维护流程</span><button class="btn" type="button" data-action="close-common-rules">关闭</button></footer>
+    <div class="c-modal__body">
+      <aside class="common-rule-nav" aria-label="通用节点列表">
+        <div class="common-rule-nav__head"><strong>通用节点</strong><button class="btn btn--text btn--color-primary btn--sm" type="button" data-action="new-common-rule">+ 手动添加</button></div>
+        <div id="commonRuleNav"></div>
+      </aside>
+      <form class="common-rule-form" id="commonRuleForm">
+        <div class="common-rule-form__head"><div><div class="common-rule-detail__eyebrow">节点配置 · 可编辑</div><h3 id="commonRuleFormTitle">退回</h3></div><span class="tag tag--success" id="commonRuleStatusTag">已启用</span></div>
+        <div class="common-rule-form__grid">
+          <label class="common-rule-field"><span>节点名称</span><input class="input" name="name" required maxlength="30" placeholder="例如：退回" /></label>
+          <label class="common-rule-field"><span>归类结果</span><input class="input" name="result" required maxlength="30" placeholder="例如：包裹异常" /></label>
+          <label class="common-rule-field common-rule-field--wide"><span>适用范围</span><input class="input" name="scope" required maxlength="80" placeholder="例如：正向物流退回节点" /></label>
+          <label class="common-rule-field common-rule-field--wide"><span>规则说明</span><textarea class="input" name="description" required maxlength="160" rows="3" placeholder="描述该通用节点的识别和归类规则"></textarea></label>
+          <label class="common-rule-field common-rule-field--wide"><span>匹配关键词 <em>用逗号分隔</em></span><textarea class="input" name="keywords" required rows="3" placeholder="退回, 退件, returned"></textarea></label>
+          <label class="common-rule-field"><span>状态</span><input class="input" name="status" required maxlength="10" placeholder="已启用 / 已停用" /></label>
+        </div>
+        <div class="common-rule-form__note">命中任一关键词后，系统按归类结果生成业务节点；规则变更仅影响后续轨迹识别，历史结果不回溯。</div>
+        <footer class="c-modal__foot"><span class="modal-readonly" id="commonRuleUpdatedAt">最近更新：—</span><div class="c-modal__foot-actions"><button class="btn" type="button" data-action="close-common-rules">取消</button><button class="btn btn--solid btn--color-primary" type="submit">保存配置</button></div></footer>
+      </form>
+    </div>
   </section>
   <div class="c-drawer-mask" data-action="close-drawer"></div>
   <aside class="c-drawer" data-open="false" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
@@ -70,6 +87,6 @@
     <div class="c-drawer__body" id="drawerBody"></div>
     <footer class="c-drawer__foot"><button class="btn" data-action="close-drawer">取消</button><button class="btn btn--solid btn--color-primary" data-action="save-rule">保存规则</button></footer>
   </aside>
-  <script src="script.js"></script>
+  <script src="script.js?v=common-rules-edit"></script>
 </body>
 </html>

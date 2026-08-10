@@ -48,17 +48,55 @@ function renderRows() {
 function renderCommonRules() {
   const selected = commonRules.find((rule) => rule.id === selectedCommonRuleId) || commonRules[0];
   selectedCommonRuleId = selected.id;
-  $('#commonRuleNav').innerHTML = commonRules.map((rule) => `<button class="common-rule-nav__item${rule.id === selected.id ? ' is-active' : ''}" type="button" data-action="select-common-rule" data-id="${rule.id}"><span class="common-rule-nav__name">${rule.name}</span><span class="common-rule-nav__meta">${rule.result}</span></button>`).join('');
-  $('#commonRuleDetail').innerHTML = `<div class="common-rule-detail__eyebrow">通用节点配置 · 只读</div>
-    <div class="common-rule-detail__title-row"><h3>${selected.name}</h3><span class="tag tag--success">${selected.status}</span></div>
-    <p class="common-rule-detail__desc">${selected.description}</p>
-    <dl class="common-rule-fields"><div><dt>规则类型</dt><dd>${selected.type}</dd></div><div><dt>归类结果</dt><dd><span class="tag ${selected.result === '包裹异常' ? 'tag--error' : 'tag--processing'}">${selected.result}</span></dd></div><div><dt>适用范围</dt><dd>${selected.scope}</dd></div><div><dt>最近更新</dt><dd>${selected.updatedAt} · ${selected.operator}</dd></div></dl>
-    <div class="common-rule-keywords"><div class="common-rule-section-title">匹配关键词</div><div class="keyword-list">${selected.keywords.map((item) => `<span class="tag tag--default">${item}</span>`).join('')}</div></div>
-    <div class="common-rule-callout"><strong>识别说明</strong><span>命中任一关键词后，系统按“归类结果”生成业务节点；规则变更仅影响后续轨迹识别，历史结果不回溯。</span></div>`;
+  $('#commonRuleNav').innerHTML = commonRules.map((rule) => `<button class="common-rule-nav__item${rule.id === selected.id ? ' is-active' : ''}" type="button" data-action="select-common-rule" data-id="${rule.id}" aria-selected="${rule.id === selected.id}"><span class="common-rule-nav__name">${rule.name || '未命名节点'}</span><span class="common-rule-nav__meta">${rule.result}</span></button>`).join('');
+  fillCommonRuleForm();
+}
+
+function fillCommonRuleForm() {
+  const selected = commonRules.find((rule) => rule.id === selectedCommonRuleId) || commonRules[0];
+  const form = $('#commonRuleForm');
+  if (!selected || !form) return;
+  form.elements.name.value = selected.name;
+  form.elements.result.value = selected.result;
+  form.elements.scope.value = selected.scope;
+  form.elements.description.value = selected.description;
+  form.elements.keywords.value = selected.keywords.join(', ');
+  form.elements.status.value = selected.status;
+  $('#commonRuleFormTitle').textContent = selected.name || '新增通用节点';
+  $('#commonRuleStatusTag').textContent = selected.status;
+  $('#commonRuleStatusTag').className = `tag ${selected.status === '已启用' ? 'tag--success' : 'tag--default'}`;
+  $('#commonRuleUpdatedAt').textContent = selected.updatedAt === '未保存' ? '新建配置 · 尚未保存' : `最近更新：${selected.updatedAt} · ${selected.operator}`;
 }
 
 function openCommonRules() { renderCommonRules(); $('.c-modal').dataset.open = 'true'; $('.c-modal-mask').dataset.open = 'true'; }
 function closeCommonRules() { $('.c-modal').dataset.open = 'false'; $('.c-modal-mask').dataset.open = 'false'; }
+
+function newCommonRule() {
+  const id = `custom-${Date.now()}`;
+  commonRules.push({ id, name: '', type: '通用节点', result: '包裹异常', description: '', keywords: [], scope: '', status: '已启用', updatedAt: '未保存', operator: '当前用户' });
+  selectedCommonRuleId = id;
+  renderCommonRules();
+  window.setTimeout(() => $('#commonRuleForm').elements.name.focus(), 0);
+}
+
+function saveCommonRule(event) {
+  event.preventDefault();
+  const selected = commonRules.find((rule) => rule.id === selectedCommonRuleId);
+  if (!selected) return;
+  const data = new FormData(event.currentTarget);
+  selected.name = data.get('name').trim();
+  selected.result = data.get('result').trim();
+  selected.scope = data.get('scope').trim();
+  selected.description = data.get('description').trim();
+  selected.keywords = keywordInput(data.get('keywords'));
+  selected.status = data.get('status').trim();
+  if (!selected.keywords.length) { showToast('请至少保留一个匹配关键词'); return; }
+  selected.updatedAt = new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
+  selected.operator = '当前用户';
+  renderCommonRules();
+  renderRows();
+  showToast(`通用规则“${selected.name}”已保存`);
+}
 
 function openDrawer(id) {
   selectedRule = rules.find((rule) => rule.id === id);
@@ -101,6 +139,7 @@ document.addEventListener('click', (event) => {
   if (action === 'open-common-rules') openCommonRules();
   if (action === 'close-common-rules') closeCommonRules();
   if (action === 'select-common-rule') { selectedCommonRuleId = id; renderCommonRules(); }
+  if (action === 'new-common-rule') newCommonRule();
   if (action === 'new-rule') showToast('新增规则入口已打开（原型示意）');
   if (action === 'refresh') { renderRows(); showToast('规则列表已刷新'); }
   if (action === 'search') { renderRows(); showToast('已按当前条件查询'); }
@@ -108,5 +147,6 @@ document.addEventListener('click', (event) => {
 });
 
 $('#keywordInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') renderRows(); });
+$('#commonRuleForm').addEventListener('submit', saveCommonRule);
 document.addEventListener('keydown', (event) => { if (event.key !== 'Escape') return; if ($('.c-drawer').dataset.open === 'true') closeDrawer(); if ($('.c-modal').dataset.open === 'true') closeCommonRules(); });
 renderRows();

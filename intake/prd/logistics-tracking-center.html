@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>物流轨迹中心与物流规则改造 PRD</title>
+  <title>物流轨迹中心与通用规则配置改造 PRD</title>
   <style>
     :root{--ink:#1f2937;--muted:#667085;--line:#e5e7eb;--bg:#f5f7fa;--blue:#1677ff;--blue-bg:#eaf3ff;--warn:#d48806;--warn-bg:#fffbe6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}.page{max-width:1200px;margin:auto;padding:28px 20px 64px}.hero,nav,section{background:#fff;border:1px solid var(--line);border-radius:10px}.hero{padding:26px 30px;margin-bottom:14px}h1{margin:0;font-size:28px;line-height:1.3}h2{margin:0 -30px 16px;padding:14px 30px;border-bottom:1px solid var(--line);font-size:20px;line-height:1.4}h3{margin:20px 0 8px;font-size:16px}.subtitle{margin-top:8px;color:var(--muted);font-size:16px}.meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;color:var(--muted)}.badge{color:var(--blue);background:var(--blue-bg);border-radius:999px;padding:1px 9px}.notice{margin-top:16px;border-left:3px solid var(--blue);padding:8px 12px;background:var(--blue-bg)}nav{padding:9px 14px;margin-bottom:14px;position:sticky;top:8px;z-index:2}nav a{color:var(--blue);text-decoration:none;margin-right:14px;white-space:nowrap}section{padding:0 30px 24px;margin:14px 0}p{margin:8px 0}ul{margin:8px 0;padding-left:22px}table{width:100%;border-collapse:collapse;margin:9px 0 14px}th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:#f8fafc;white-space:nowrap;font-weight:600}code{background:#f1f5f9;padding:1px 4px;border-radius:3px}pre{white-space:pre-wrap;overflow:auto;background:#f8fafc;border:1px solid var(--line);border-radius:7px;padding:12px 14px;font:12px/1.55 Consolas,monospace}.muted{color:var(--muted)}.priority{white-space:nowrap;color:var(--blue);font-weight:600}.warning{color:var(--warn);background:var(--warn-bg);padding:8px 12px;border-radius:6px}@media(max-width:760px){.page{padding:10px 8px 40px}.hero,section{padding-left:14px;padding-right:14px}h2{margin-left:-14px;margin-right:-14px;padding-left:14px}nav{position:static}table{display:block;overflow:auto;font-size:12px}}
   </style>
@@ -15,9 +15,9 @@
 <main class="page">
   <header class="hero">
     <h1>物流轨迹中心与物流规则改造 PRD</h1>
-    <div class="subtitle">统一查询正向/逆向物流，独立维护轨迹关键词归类规则</div>
+    <div class="subtitle">统一查询正向/逆向物流，并在物流规则原页面内配置通用轨迹归类规则</div>
     <div class="meta"><span>版本：V1.2</span><span class="badge">评审稿</span><span>评审日期：2026-07-23</span><span>目标终端：B 端 ERP Web</span></div>
-    <div class="notice">本需求对应两个页面：物流轨迹中心负责查询与查看轨迹；物流规则负责维护通用轨迹识别规则。通用轨迹配置不得出现在物流轨迹中心模块内。</div>
+    <div class="notice">本需求对应两个页面：物流轨迹中心负责查询与查看轨迹；物流规则负责维护通用轨迹识别规则。通用规则配置入口放在物流规则原页面右上角，通过弹窗完成查看、编辑和手动新增，不新增第三个页面。</div>
   </header>
 
   <nav>
@@ -29,15 +29,15 @@
     <h3>1.1 背景</h3>
     <p>现有物流页面以正向物流列表为主，正向发货、逆向退件和异常轨迹的展示口径不一致。物流运营、客服和退件仓需要在稳定的 ERP 列表工作区内完成查询、异常定位和轨迹查看。</p>
     <h3>1.2 目标</h3>
-    <table><tr><th>目标</th><th>说明</th><th>优先级</th></tr><tr><td>统一查询</td><td>在物流轨迹中心切换正向物流和逆向物流，分别展示对应状态与字段。</td><td class="priority">P0</td></tr><tr><td>异常归类</td><td>承运商原始轨迹归一为业务节点；正向派送失败、丢件、破损等归入“包裹异常”。</td><td class="priority">P0</td></tr><tr><td>规则维护</td><td>将“丢件”“派送失败”等通用关键词配置迁移到独立物流规则页面。</td><td class="priority">P0</td></tr><tr><td>降低跳转</td><td>包裹详情使用右侧 Drawer，不为查看轨迹新增独立页面。</td><td class="priority">P0</td></tr></table>
+    <table><tr><th>目标</th><th>说明</th><th>优先级</th></tr><tr><td>统一查询</td><td>在物流轨迹中心切换正向物流和逆向物流，分别展示对应状态与字段。</td><td class="priority">P0</td></tr><tr><td>异常归类</td><td>承运商原始轨迹归一为业务节点；正向派送失败、丢件、破损等归入“包裹异常”。</td><td class="priority">P0</td></tr><tr><td>规则维护</td><td>在物流规则原页面右上角打开通用规则配置弹窗，维护“退回”“丢件”“派送失败”等节点。</td><td class="priority">P0</td></tr><tr><td>降低跳转</td><td>包裹详情使用右侧 Drawer，通用规则使用当前页面 Modal，不新增独立页面。</td><td class="priority">P0</td></tr></table>
     <h3>1.3 非目标</h3>
-    <ul><li>不在物流轨迹中心增加通用轨迹配置按钮、弹窗或配置面板。</li><li>不在本期实现退件入库、质检、退款、理赔、售后审批页面。</li><li>不改变承运商原始轨迹，不将技术堆栈直接展示给业务用户。</li><li>不新增角色切换器、页面状态切换器或调试面板。</li></ul>
+    <ul><li>不在物流轨迹中心增加通用轨迹配置按钮、弹窗或配置面板。</li><li>不新增独立的通用规则配置页面；配置能力只在物流规则原页面的弹窗中提供。</li><li>不在本期实现退件入库、质检、退款、理赔、售后审批页面。</li><li>不改变承运商原始轨迹，不将技术堆栈直接展示给业务用户。</li><li>不新增角色切换器、页面状态切换器或调试面板。</li></ul>
   </section>
 
   <section id="scope">
     <h2>2. 页面范围与边界</h2>
-    <table><tr><th>页面</th><th>线上参考路径</th><th>主任务</th><th>本期范围</th></tr><tr><td>物流轨迹中心</td><td><code>/yh-logistics/logisticsTrajectory</code></td><td>查询包裹、定位异常、查看正向/逆向轨迹</td><td>方向切换、状态筛选、条件查询、列表、详情 Drawer、同步/导出/备注反馈</td></tr><tr><td>物流规则</td><td><code>/yh-logistics/logisticsRules</code></td><td>维护轨迹关键词与业务状态的归类规则</td><td>规则列表、关键词筛选、编辑抽屉、保存规则、规则更新时间</td></tr></table>
-    <div class="warning">明确边界：物流轨迹中心只消费规则结果，不提供规则编辑入口；物流规则页面只维护识别规则，不承担包裹查询和轨迹详情查看。</div>
+    <table><tr><th>页面</th><th>线上参考路径</th><th>主任务</th><th>本期范围</th></tr><tr><td>物流轨迹中心</td><td><code>/yh-logistics/logisticsTrajectory</code></td><td>查询包裹、定位异常、查看正向/逆向轨迹</td><td>方向切换、状态筛选、条件查询、列表、详情 Drawer、同步/导出/备注反馈</td></tr><tr><td>物流规则</td><td><code>/yh-logistics/logisticsRules</code></td><td>维护轨迹关键词与业务状态的归类规则</td><td>规则列表、关键词筛选、普通规则编辑抽屉、右上角通用规则配置 Modal、编辑/手动新增、保存规则</td></tr></table>
+    <div class="warning">明确边界：物流轨迹中心只消费规则结果，不提供规则编辑入口；物流规则页面承载规则列表，并在本页面 Modal 内维护通用节点，不新增第三个页面。</div>
   </section>
 
   <section id="flow">
@@ -59,15 +59,15 @@
         <div class="flow-result"><strong>查询结果：</strong>定位异常包裹后，可同步轨迹、导出列表、添加备注；历史轨迹只读，原始描述保留在详情中。</div>
       </article>
       <article class="flow-track">
-        <div class="flow-track__head"><span class="flow-track__icon flow-track__icon--purple">B</span><span class="flow-track__title">物流规则｜通用轨迹识别与归类</span><span class="flow-track__desc">独立于物流轨迹中心维护</span></div>
+        <div class="flow-track__head"><span class="flow-track__icon flow-track__icon--purple">B</span><span class="flow-track__title">物流规则｜通用轨迹识别与归类</span><span class="flow-track__desc">原页面内 Modal 配置</span></div>
         <div class="flow-steps">
-          <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">1</span><strong class="flow-step__title">进入物流规则</strong><span class="flow-step__text">从独立页面维护通用关键词配置。</span></div><span class="flow-arrow">→</span></div>
+          <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">1</span><strong class="flow-step__title">进入物流规则</strong><span class="flow-step__text">在原页面右上角点击“配置通用规则”。</span></div><span class="flow-arrow">→</span></div>
           <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">2</span><strong class="flow-step__title">筛选规则</strong><span class="flow-step__text">按规则名称或关键词查找已有规则。</span></div><span class="flow-arrow">→</span></div>
           <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">3</span><strong class="flow-step__title">编辑关键词</strong><span class="flow-step__text">支持中文逗号、英文逗号和换行分隔。</span></div><span class="flow-arrow">→</span></div>
           <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">4</span><strong class="flow-step__title">校验并保存</strong><span class="flow-step__text">至少保留一个关键词，保存后记录更新时间。</span></div><span class="flow-arrow">→</span></div>
           <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">5</span><strong class="flow-step__title">影响后续识别</strong><span class="flow-step__text">后续新轨迹按新规则归类为业务节点。</span></div></div>
         </div>
-        <div class="flow-result flow-result--purple"><strong>规则结果：</strong>“丢件”“派送失败”等关键词归类为“包裹异常”，物流轨迹中心只消费归类结果，不提供规则编辑入口。</div>
+        <div class="flow-result flow-result--purple"><strong>规则结果：</strong>在 Modal 内编辑或手动添加节点；“丢件”“派送失败”等关键词归类为“包裹异常”，物流轨迹中心只消费归类结果。</div>
         <div class="flow-note">历史数据不回溯：规则保存不改变已生成的历史轨迹结果；是否新增、停用、删除规则及其正式权限待后续确认。</div>
       </article>
     </div>
@@ -81,8 +81,8 @@
   E --> F[查询包裹列表]
   F --> G[打开轨迹详情 Drawer]
   F --> H[同步/导出/备注]
-  I[进入物流规则] --> J[筛选规则]
-  J --> K[编辑关键词]
+  I[进入物流规则原页面] --> J[点击配置通用规则]
+  J --> K[Modal 编辑/手动添加节点]
   K --> L[保存规则]
   L --> M[影响后续轨迹识别]</pre>
     <p class="muted">规则保存不回溯历史轨迹结果；历史数据仍按原识别结果展示。</p>
@@ -105,20 +105,20 @@
   <section id="rules">
     <h2>5. 物流规则需求</h2>
     <h3>5.1 页面目标</h3>
-    <p>在独立的物流规则页面维护轨迹原文与业务状态的归类规则，避免配置能力和包裹查询能力混在同一个模块中。</p>
+    <p>在物流规则原页面维护轨迹原文与业务状态的归类规则；通用节点通过右上角“配置通用规则”入口在当前页面 Modal 内维护，避免新增独立页面。</p>
     <h3>5.2 页面功能</h3>
     <table><tr><th>功能</th><th>要求</th><th>优先级</th></tr><tr><td>规则列表</td><td>展示规则名称、规则类型、匹配关键词、归类状态、启用状态、最近更新时间、操作人。</td><td class="priority">P0</td></tr><tr><td>规则筛选</td><td>支持按规则名称或关键词查询，支持重置。</td><td class="priority">P0</td></tr><tr><td>编辑规则</td><td>点击“编辑”打开右侧 Drawer，维护关键词；中文逗号、英文逗号和换行均可分隔。</td><td class="priority">P0</td></tr><tr><td>保存规则</td><td>至少保留一个关键词；保存后更新时间和操作人刷新。</td><td class="priority">P0</td></tr></table>
     <h3>5.2.1 通用规则配置</h3>
-    <table><tr><th>交互</th><th>要求</th><th>优先级</th></tr><tr><td>打开配置</td><td>物流规则页面右上角新增“配置通用规则”按钮；点击打开居中的 Modal，不离开当前列表。</td><td class="priority">P0</td></tr><tr><td>节点切换</td><td>弹窗左侧展示通用节点列表，当前包含“退回”“丢件”“派送失败”；点击节点后右侧刷新对应配置。</td><td class="priority">P0</td></tr><tr><td>配置查看</td><td>右侧展示节点描述、归类结果、适用范围、匹配关键词、启用状态和最近更新时间；本期为只读查看。</td><td class="priority">P0</td></tr><tr><td>关闭弹窗</td><td>支持关闭按钮、遮罩点击和 ESC 关闭；关闭后保留原列表筛选状态。</td><td class="priority">P0</td></tr></table>
+    <table><tr><th>交互</th><th>要求</th><th>优先级</th></tr><tr><td>打开配置</td><td>物流规则页面右上角新增“配置通用规则”按钮；点击打开居中的 Modal，不离开当前列表。</td><td class="priority">P0</td></tr><tr><td>节点切换</td><td>弹窗左侧展示通用节点列表，当前包含“退回”“丢件”“派送失败”；点击节点后右侧刷新对应配置。</td><td class="priority">P0</td></tr><tr><td>配置编辑</td><td>右侧可编辑节点名称、归类结果、适用范围、规则说明、匹配关键词和启用状态，并显示最近更新时间。</td><td class="priority">P0</td></tr><tr><td>手动新增</td><td>左侧提供“手动添加”入口，创建新的通用节点，填写完成后保存并加入节点列表。</td><td class="priority">P0</td></tr><tr><td>关闭弹窗</td><td>支持关闭按钮、遮罩点击和 ESC 关闭；关闭后保留原列表筛选状态。</td><td class="priority">P0</td></tr></table>
     <h3>5.3 初始规则</h3>
     <table><tr><th>规则名称</th><th>匹配关键词示例</th><th>归类结果</th></tr><tr><td>丢件</td><td>丢件、包裹丢失、无法找回、package lost、lost parcel</td><td>包裹异常</td></tr><tr><td>派送失败</td><td>派送失败、投递失败、delivery failed、unable to deliver</td><td>包裹异常</td></tr></table>
     <h3>5.4 页面边界</h3>
-    <ul><li>物流规则页面不展示包裹列表和轨迹详情。</li><li>规则变更只影响后续轨迹识别，历史结果不回溯。</li><li>新增规则、启停规则和删除规则的正式权限与流程待确认；本期原型只覆盖已有规则编辑。</li></ul>
+    <ul><li>物流规则页面不展示包裹列表和轨迹详情。</li><li>规则变更只影响后续轨迹识别，历史结果不回溯。</li><li>通用规则配置不跳转新页面；支持已有节点编辑和手动新增，正式权限、审批与删除流程待确认。</li></ul>
   </section>
 
   <section id="data">
     <h2>6. 数据与状态定义</h2>
-    <table><tr><th>字段</th><th>类型</th><th>说明</th></tr><tr><td><code>direction</code></td><td>enum</td><td><code>forward</code> 正向；<code>reverse</code> 逆向。</td></tr><tr><td><code>status</code></td><td>enum</td><td>按方向返回一级业务节点；前端不直接修改状态。</td></tr><tr><td><code>returnStage</code></td><td>enum</td><td>正向退回节点：退回中、退回签收、包裹异常。</td></tr><tr><td><code>exceptionType</code></td><td>enum</td><td>正向：查不到轨迹、派送失败、丢件、破损、轨迹同步失败；逆向：妥投失败、破损丢件。</td></tr><tr><td><code>returnType</code></td><td>enum</td><td>仅逆向使用：原包裹退回、客户退回。</td></tr><tr><td><code>keywordConfig</code></td><td>object</td><td>物流规则页面维护的关键词集合，不在轨迹中心编辑。</td></tr><tr><td><code>rawDescription</code></td><td>string</td><td>承运商原始描述，只读展示或详情展开，不覆盖标准节点。</td></tr></table>
+    <table><tr><th>字段</th><th>类型</th><th>说明</th></tr><tr><td><code>direction</code></td><td>enum</td><td><code>forward</code> 正向；<code>reverse</code> 逆向。</td></tr><tr><td><code>status</code></td><td>enum</td><td>按方向返回一级业务节点；前端不直接修改状态。</td></tr><tr><td><code>returnStage</code></td><td>enum</td><td>正向退回节点：退回中、退回签收、包裹异常。</td></tr><tr><td><code>exceptionType</code></td><td>enum</td><td>正向：查不到轨迹、派送失败、丢件、破损、轨迹同步失败；逆向：妥投失败、破损丢件。</td></tr><tr><td><code>returnType</code></td><td>enum</td><td>仅逆向使用：原包裹退回、客户退回。</td></tr><tr><td><code>keywordConfig</code></td><td>object</td><td>物流规则原页面通用规则配置 Modal 维护的关键词集合，不在轨迹中心编辑。</td></tr><tr><td><code>rawDescription</code></td><td>string</td><td>承运商原始描述，只读展示或详情展开，不覆盖标准节点。</td></tr></table>
     <h3>6.1 状态流转</h3>
     <pre>已交运 → 未上网 → 已上网 → 已交航 → 已到达目的国 → 已签收
 任意未终态 → 轨迹同步失败 → 重试成功后恢复原状态
@@ -139,7 +139,7 @@
 
   <section id="acceptance">
     <h2>9. 验收标准</h2>
-    <ol><li>物流轨迹中心不出现“通用轨迹配置”按钮、弹窗或配置表单。</li><li>物流规则页面可展示丢件、派送失败两条规则，并可打开编辑 Drawer。</li><li>规则关键词支持中文逗号、英文逗号和换行分隔，至少保留一个关键词才能保存。</li><li>正向物流一级状态包含“退回”；其二级节点为“退回中、退回签收、包裹异常”，不再展示“退回破损丢件”。</li><li>正向物流“包裹异常”二级类型包含查不到轨迹、派送失败、丢件、破损、轨迹同步失败。</li><li>逆向物流一级状态包含退回中、已签收、包裹异常；退回类型包含原包裹退回、客户退回。</li><li>正向/逆向切换、查询、重置、详情 Drawer、ESC/遮罩关闭均可用。</li><li>页面无控制台错误，样式守卫和脚本语法检查通过。</li></ol>
+    <ol><li>物流轨迹中心不出现“通用轨迹配置”按钮、弹窗或配置表单。</li><li>物流规则页面右上角提供“配置通用规则”入口，Modal 内可切换退回、丢件、派送失败节点。</li><li>通用规则支持查看并编辑节点名称、归类结果、适用范围、说明、关键词和状态。</li><li>通用规则支持手动新增节点，保存后立即出现在左侧节点列表。</li><li>规则关键词支持中文逗号、英文逗号和换行分隔，至少保留一个关键词才能保存。</li><li>正向物流一级状态包含“退回”；其二级节点为“退回中、退回签收、包裹异常”，不再展示“退回破损丢件”。</li><li>正向物流“包裹异常”二级类型包含查不到轨迹、派送失败、丢件、破损、轨迹同步失败。</li><li>逆向物流一级状态包含退回中、已签收、包裹异常；退回类型包含原包裹退回、客户退回。</li><li>正向/逆向切换、查询、重置、详情 Drawer、ESC/遮罩关闭均可用。</li><li>页面无控制台错误，样式守卫和脚本语法检查通过。</li></ol>
   </section>
 
   <section id="open">
