@@ -52,6 +52,50 @@ a { color: inherit; }
 
 @media (max-width: 680px) { .c-modal { width: calc(100vw - 24px); max-height: calc(100vh - 24px); }.c-modal__body { grid-template-columns: 1fr; overflow-y: auto; }.common-rule-nav { border-right: 0; border-bottom: 1px solid var(--color-border-secondary); }.common-rule-nav__item { margin-bottom: 0; }.common-rule-form { padding: var(--space-4); overflow: visible; }.common-rule-form__grid { grid-template-columns: 1fr; }.common-rule-field--wide { grid-column: auto; }.common-rule-form .c-modal__foot { margin-left: calc(var(--space-4) * -1); margin-right: calc(var(--space-4) * -1); padding-left: var(--space-4); padding-right: var(--space-4); }.c-modal__head { padding-left: var(--space-4); padding-right: var(--space-4); }.modal-readonly { display: none; } }
 
+/* 按线上“添加规则”表单还原通用规则配置。 */
+.c-rule-config-modal { width: min(1080px, calc(100vw - 24px)); max-height: min(860px, calc(100vh - 24px)); border-radius: 2px; }
+.rule-config-form { overflow-y: auto; padding: 28px 32px 0; }
+.rule-config-basic { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px 36px; align-items: center; }
+.rule-config-field { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: center; gap: 14px; color: var(--color-text-secondary); font-size: 16px; }
+.rule-config-field > span { white-space: nowrap; text-align: right; }
+.rule-config-field em { color: var(--color-error); font-style: normal; }
+.rule-config-field--switch { grid-column: 3; }
+.config-select-wrap { position: relative; min-width: 0; }
+.config-select-wrap .config-select { width: 100%; padding-right: 30px; color: var(--color-text-tertiary); cursor: pointer; }
+.config-select-wrap b { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-tertiary); font-weight: 400; pointer-events: none; }
+.toggle-control { position: relative; display: inline-flex; width: 48px; height: 24px; }
+.toggle-control input { position: absolute; opacity: 0; }
+.toggle-control i { width: 48px; height: 24px; border-radius: 20px; background: var(--color-border); cursor: pointer; transition: background var(--motion); }
+.toggle-control i::after { content: ''; display: block; width: 20px; height: 20px; margin: 2px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-1); transition: transform var(--motion); }
+.toggle-control input:checked + i { background: #5ba4e8; }
+.toggle-control input:checked + i::after { transform: translateX(24px); }
+.rule-config-tabs { display: flex; margin-top: 24px; border-bottom: 1px solid var(--color-border); }
+.rule-config-tab { min-height: 34px; padding: 0 18px; border: 1px solid var(--color-border); border-bottom: 0; background: var(--color-bg-container); color: var(--color-text-secondary); cursor: pointer; font-size: 14px; }
+.rule-config-tab + .rule-config-tab { border-left: 0; }
+.rule-config-tab.is-active { border-color: var(--color-primary-6); background: #5ba4e8; color: #fff; }
+.config-section { margin-top: 18px; }
+.config-section__title { display: flex; align-items: center; gap: 18px; margin: 0 0 18px; color: var(--color-text); font-size: 18px; font-weight: 500; }
+.config-section__title::before, .config-section__title::after { content: ''; height: 1px; background: var(--color-border); }
+.config-section__title::before { width: 24px; }
+.config-section__title::after { flex: 1; }
+.config-count-row { display: flex; align-items: center; gap: 12px; min-height: 40px; color: var(--color-text-secondary); font-size: 16px; }
+.config-radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.config-radio input { width: 17px; height: 17px; accent-color: var(--color-primary-6); }
+.config-number { width: 96px; text-align: center; }
+.keyword-rule-box { margin: 6px 0 18px 22px; padding: 14px 12px 12px; border: 4px solid #4b99f5; border-radius: 8px; }
+.config-radio--description { color: #4b99f5; line-height: 1.5; }
+.keyword-input-row { display: flex; align-items: center; gap: 12px; margin: 16px 0 8px; padding-left: 28px; color: var(--color-text-secondary); }
+.keyword-input-row > span { width: 86px; text-align: right; white-space: nowrap; }
+.keyword-input-row .input { width: 168px; }
+.config-keyword-list { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 126px; min-height: 4px; }
+.config-keyword-tag button { margin-left: 5px; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.warning-rule-row { display: flex; align-items: center; gap: 12px; min-height: 52px; color: var(--color-text-secondary); font-size: 16px; }
+.warning-rule-row > span:first-child { width: 68px; text-align: right; }
+.warning-rule-row small { color: var(--color-text-tertiary); font-size: 13px; }
+.rule-config-form > .c-modal__foot { position: sticky; bottom: 0; margin: 28px -32px 0; padding: 16px 32px; background: var(--color-bg-container); }
+
+@media (max-width: 800px) { .c-rule-config-modal { width: calc(100vw - 16px); }.rule-config-form { padding: 20px 16px 0; }.rule-config-basic { grid-template-columns: 1fr; gap: 16px; }.rule-config-field--switch { grid-column: auto; }.rule-config-tabs { overflow-x: auto; }.rule-config-tab { flex: 0 0 auto; padding: 0 12px; }.keyword-rule-box { margin-left: 0; }.keyword-input-row { padding-left: 0; }.config-keyword-list { padding-left: 0; }.warning-rule-row { flex-wrap: wrap; gap: 8px; }.warning-rule-row > span:first-child { width: auto; text-align: left; }.rule-config-form > .c-modal__foot { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; } }
+
 .c-shell { display: grid; grid-template-columns: var(--layout-sider-width) 1fr; grid-template-rows: var(--layout-header-height) var(--layout-breadcrumb-height) 1fr; grid-template-areas: "sider header" "sider crumb" "sider content"; min-height: 100vh; }
 .c-shell[data-collapsed="true"] { grid-template-columns: var(--layout-sider-collapsed-width) 1fr; }
 .c-shell__sider { grid-area: sider; background: var(--color-sider-bg); color: var(--color-sider-text); display: flex; flex-direction: column; overflow: hidden; }

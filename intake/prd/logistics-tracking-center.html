@@ -36,7 +36,7 @@
 
   <section id="scope">
     <h2>2. 页面范围与边界</h2>
-    <table><tr><th>页面</th><th>线上参考路径</th><th>主任务</th><th>本期范围</th></tr><tr><td>物流轨迹中心</td><td><code>/yh-logistics/logisticsTrajectory</code></td><td>查询包裹、定位异常、查看正向/逆向轨迹</td><td>方向切换、状态筛选、条件查询、列表、详情 Drawer、同步/导出/备注反馈</td></tr><tr><td>物流规则</td><td><code>/yh-logistics/logisticsRules</code></td><td>维护轨迹关键词与业务状态的归类规则</td><td>规则列表、关键词筛选、普通规则编辑抽屉、右上角通用规则配置 Modal、编辑/手动新增、保存规则</td></tr></table>
+    <table><tr><th>页面</th><th>线上参考路径</th><th>主任务</th><th>本期范围</th></tr><tr><td>物流轨迹中心</td><td><code>/yh-logistics/logisticsTrajectory</code></td><td>查询包裹、定位异常、查看正向/逆向轨迹</td><td>方向切换、状态筛选、条件查询、列表、详情 Drawer、同步/导出/备注反馈</td></tr><tr><td>物流规则</td><td><code>/yh-logistics/logisticsRules</code></td><td>维护物流商轨迹取值与预警规则</td><td>规则列表字段与截图一致；右上角配置入口；添加/编辑 Modal、四类取值设置、关键词添加、预警天数、保存</td></tr></table>
     <div class="warning">明确边界：物流轨迹中心只消费规则结果，不提供规则编辑入口；物流规则页面承载规则列表，并在本页面 Modal 内维护通用节点，不新增第三个页面。</div>
   </section>
 
@@ -59,15 +59,15 @@
         <div class="flow-result"><strong>查询结果：</strong>定位异常包裹后，可同步轨迹、导出列表、添加备注；历史轨迹只读，原始描述保留在详情中。</div>
       </article>
       <article class="flow-track">
-        <div class="flow-track__head"><span class="flow-track__icon flow-track__icon--purple">B</span><span class="flow-track__title">物流规则｜通用轨迹识别与归类</span><span class="flow-track__desc">原页面内 Modal 配置</span></div>
+        <div class="flow-track__head"><span class="flow-track__icon flow-track__icon--purple">B</span><span class="flow-track__title">物流规则｜物流商轨迹取值与预警</span><span class="flow-track__desc">原页面内 Modal 配置</span></div>
         <div class="flow-steps">
           <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">1</span><strong class="flow-step__title">进入物流规则</strong><span class="flow-step__text">在原页面右上角点击“配置通用规则”。</span></div><span class="flow-arrow">→</span></div>
-          <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">2</span><strong class="flow-step__title">筛选规则</strong><span class="flow-step__text">按规则名称或关键词查找已有规则。</span></div><span class="flow-arrow">→</span></div>
-          <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">3</span><strong class="flow-step__title">编辑关键词</strong><span class="flow-step__text">支持中文逗号、英文逗号和换行分隔。</span></div><span class="flow-arrow">→</span></div>
-          <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">4</span><strong class="flow-step__title">校验并保存</strong><span class="flow-step__text">至少保留一个关键词，保存后记录更新时间。</span></div><span class="flow-arrow">→</span></div>
-          <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">5</span><strong class="flow-step__title">影响后续识别</strong><span class="flow-step__text">后续新轨迹按新规则归类为业务节点。</span></div></div>
+          <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">2</span><strong class="flow-step__title">选择物流商与渠道</strong><span class="flow-step__text">配置物流商、物流渠道、查询状态与映射单号。</span></div><span class="flow-arrow">→</span></div>
+          <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">3</span><strong class="flow-step__title">配置四类取值</strong><span class="flow-step__text">设置轨迹序号、关键词、排除关键词和预警天数。</span></div><span class="flow-arrow">→</span></div>
+          <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">4</span><strong class="flow-step__title">校验并保存</strong><span class="flow-step__text">完善必填字段和关键词后保存配置。</span></div><span class="flow-arrow">→</span></div>
+          <div class="flow-step-wrap"><div class="flow-step flow-step--purple"><span class="flow-step__number">5</span><strong class="flow-step__title">影响后续识别</strong><span class="flow-step__text">后续新轨迹按新规则判断业务节点和预警。</span></div></div>
         </div>
-        <div class="flow-result flow-result--purple"><strong>规则结果：</strong>在 Modal 内编辑或手动添加节点；“丢件”“派送失败”等关键词归类为“包裹异常”，物流轨迹中心只消费归类结果。</div>
+        <div class="flow-result flow-result--purple"><strong>规则结果：</strong>按物流商和渠道识别上网、交航、到达目的国、签收节点，并按预警天数提示未达节点包裹。</div>
         <div class="flow-note">历史数据不回溯：规则保存不改变已生成的历史轨迹结果；是否新增、停用、删除规则及其正式权限待后续确认。</div>
       </article>
     </div>
@@ -105,20 +105,20 @@
   <section id="rules">
     <h2>5. 物流规则需求</h2>
     <h3>5.1 页面目标</h3>
-    <p>在物流规则原页面维护轨迹原文与业务状态的归类规则；通用节点通过右上角“配置通用规则”入口在当前页面 Modal 内维护，避免新增独立页面。</p>
+    <p>在物流规则原页面维护物流商与物流渠道的轨迹取值规则；通过右上角“配置通用规则”入口在当前页面 Modal 内维护，避免新增独立页面。</p>
     <h3>5.2 页面功能</h3>
     <table><tr><th>功能</th><th>要求</th><th>优先级</th></tr><tr><td>规则列表</td><td>展示规则名称、规则类型、匹配关键词、归类状态、启用状态、最近更新时间、操作人。</td><td class="priority">P0</td></tr><tr><td>规则筛选</td><td>支持按规则名称或关键词查询，支持重置。</td><td class="priority">P0</td></tr><tr><td>编辑规则</td><td>点击“编辑”打开右侧 Drawer，维护关键词；中文逗号、英文逗号和换行均可分隔。</td><td class="priority">P0</td></tr><tr><td>保存规则</td><td>至少保留一个关键词；保存后更新时间和操作人刷新。</td><td class="priority">P0</td></tr></table>
     <h3>5.2.1 通用规则配置</h3>
-    <table><tr><th>交互</th><th>要求</th><th>优先级</th></tr><tr><td>打开配置</td><td>物流规则页面右上角新增“配置通用规则”按钮；点击打开居中的 Modal，不离开当前列表。</td><td class="priority">P0</td></tr><tr><td>节点切换</td><td>弹窗左侧展示通用节点列表，当前包含“退回”“丢件”“派送失败”；点击节点后右侧刷新对应配置。</td><td class="priority">P0</td></tr><tr><td>配置编辑</td><td>右侧可编辑节点名称、归类结果、适用范围、规则说明、匹配关键词和启用状态，并显示最近更新时间。</td><td class="priority">P0</td></tr><tr><td>手动新增</td><td>左侧提供“手动添加”入口，创建新的通用节点，填写完成后保存并加入节点列表。</td><td class="priority">P0</td></tr><tr><td>关闭弹窗</td><td>支持关闭按钮、遮罩点击和 ESC 关闭；关闭后保留原列表筛选状态。</td><td class="priority">P0</td></tr></table>
+    <table><tr><th>交互</th><th>要求</th><th>优先级</th></tr><tr><td>打开配置</td><td>物流规则页面右上角新增“配置通用规则”按钮；点击打开居中的 Modal，不离开当前列表。</td><td class="priority">P0</td></tr><tr><td>基础字段</td><td>Modal 展示必填物流商、必填物流渠道、查询状态开关、必填映射单号，字段样式参考线上“添加规则”截图。</td><td class="priority">P0</td></tr><tr><td>取值设置</td><td>提供上网、交航、达到目的国、签收四个页签；每个页签支持按第 N 条轨迹或按轨迹关键词判断。</td><td class="priority">P0</td></tr><tr><td>关键词配置</td><td>支持轨迹关键词、排除关键词逐条输入并点击“添加”；已添加关键词可删除。</td><td class="priority">P0</td></tr><tr><td>预警配置</td><td>支持配置未上网、未交航、未到达目的国、未签收的预警天数，并展示时效计算说明。</td><td class="priority">P0</td></tr><tr><td>关闭保存</td><td>支持取消、关闭按钮、遮罩点击和 ESC 关闭；点击确定保存后关闭 Modal。</td><td class="priority">P0</td></tr></table>
     <h3>5.3 初始规则</h3>
     <table><tr><th>规则名称</th><th>匹配关键词示例</th><th>归类结果</th></tr><tr><td>丢件</td><td>丢件、包裹丢失、无法找回、package lost、lost parcel</td><td>包裹异常</td></tr><tr><td>派送失败</td><td>派送失败、投递失败、delivery failed、unable to deliver</td><td>包裹异常</td></tr></table>
     <h3>5.4 页面边界</h3>
-    <ul><li>物流规则页面不展示包裹列表和轨迹详情。</li><li>规则变更只影响后续轨迹识别，历史结果不回溯。</li><li>通用规则配置不跳转新页面；支持已有节点编辑和手动新增，正式权限、审批与删除流程待确认。</li></ul>
+    <ul><li>物流规则页面不展示包裹列表和轨迹详情。</li><li>规则变更只影响后续轨迹识别，历史结果不回溯。</li><li>规则配置不跳转新页面；物流商、物流渠道、映射单号为必填，关键词至少保留一条才能保存。</li></ul>
   </section>
 
   <section id="data">
     <h2>6. 数据与状态定义</h2>
-    <table><tr><th>字段</th><th>类型</th><th>说明</th></tr><tr><td><code>direction</code></td><td>enum</td><td><code>forward</code> 正向；<code>reverse</code> 逆向。</td></tr><tr><td><code>status</code></td><td>enum</td><td>按方向返回一级业务节点；前端不直接修改状态。</td></tr><tr><td><code>returnStage</code></td><td>enum</td><td>正向退回节点：退回中、退回签收、包裹异常。</td></tr><tr><td><code>exceptionType</code></td><td>enum</td><td>正向：查不到轨迹、派送失败、丢件、破损、轨迹同步失败；逆向：妥投失败、破损丢件。</td></tr><tr><td><code>returnType</code></td><td>enum</td><td>仅逆向使用：原包裹退回、客户退回。</td></tr><tr><td><code>keywordConfig</code></td><td>object</td><td>物流规则原页面通用规则配置 Modal 维护的关键词集合，不在轨迹中心编辑。</td></tr><tr><td><code>rawDescription</code></td><td>string</td><td>承运商原始描述，只读展示或详情展开，不覆盖标准节点。</td></tr></table>
+    <table><tr><th>字段</th><th>类型</th><th>说明</th></tr><tr><td><code>carrier</code></td><td>string</td><td>物流商，必填。</td></tr><tr><td><code>channel</code></td><td>string</td><td>物流渠道，必填。</td></tr><tr><td><code>mappingNo</code></td><td>enum</td><td>映射单号，可选物流单号、跟踪号、平台单号。</td></tr><tr><td><code>queryEnabled</code></td><td>boolean</td><td>查询状态开关。</td></tr><tr><td><code>valueRule</code></td><td>object</td><td>上网、交航、达到目的国、签收四类取值设置，支持按序号或关键词判断。</td></tr><tr><td><code>warnings</code></td><td>object</td><td>未上网、未交航、未到达目的国、未签收预警天数。</td></tr></table>
     <h3>6.1 状态流转</h3>
     <pre>已交运 → 未上网 → 已上网 → 已交航 → 已到达目的国 → 已签收
 任意未终态 → 轨迹同步失败 → 重试成功后恢复原状态
@@ -139,7 +139,7 @@
 
   <section id="acceptance">
     <h2>9. 验收标准</h2>
-    <ol><li>物流轨迹中心不出现“通用轨迹配置”按钮、弹窗或配置表单。</li><li>物流规则页面右上角提供“配置通用规则”入口，Modal 内可切换退回、丢件、派送失败节点。</li><li>通用规则支持查看并编辑节点名称、归类结果、适用范围、说明、关键词和状态。</li><li>通用规则支持手动新增节点，保存后立即出现在左侧节点列表。</li><li>规则关键词支持中文逗号、英文逗号和换行分隔，至少保留一个关键词才能保存。</li><li>正向物流一级状态包含“退回”；其二级节点为“退回中、退回签收、包裹异常”，不再展示“退回破损丢件”。</li><li>正向物流“包裹异常”二级类型包含查不到轨迹、派送失败、丢件、破损、轨迹同步失败。</li><li>逆向物流一级状态包含退回中、已签收、包裹异常；退回类型包含原包裹退回、客户退回。</li><li>正向/逆向切换、查询、重置、详情 Drawer、ESC/遮罩关闭均可用。</li><li>页面无控制台错误，样式守卫和脚本语法检查通过。</li></ol>
+    <ol><li>物流轨迹中心不出现“通用轨迹配置”按钮、弹窗或配置表单。</li><li>物流规则列表字段包含物流商、物流渠道、映射单号、查询状态、四类取值摘要和操作。</li><li>物流规则页面右上角提供“配置通用规则”入口，Modal 基础字段与截图一致。</li><li>Modal 内可切换上网、交航、达到目的国、签收四类取值设置。</li><li>轨迹关键词和排除关键词支持输入、添加、删除；预警天数支持编辑。</li><li>物流商、物流渠道、映射单号未完善或关键词为空时不可保存。</li><li>点击确定保存成功后关闭 Modal，列表显示更新后的配置摘要。</li><li>正向物流一级状态包含“退回”；其二级节点为“退回中、退回签收、包裹异常”，不再展示“退回破损丢件”。</li><li>页面无控制台错误，样式守卫和脚本语法检查通过。</li></ol>
   </section>
 
   <section id="open">

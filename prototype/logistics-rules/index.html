@@ -34,15 +34,16 @@
 
     <main class="c-shell__content">
       <header class="c-page-header">
-        <div class="c-page-header__left"><h1 class="c-page-header__title">物流规则</h1><p class="c-page-header__desc">维护轨迹原文与业务状态的归类规则，保存后影响后续轨迹识别。</p></div>
+        <div class="c-page-header__left"><h1 class="c-page-header__title">物流规则</h1><p class="c-page-header__desc">维护物流商轨迹取值与预警规则，保存后影响后续轨迹识别。</p></div>
         <div class="c-page-header__actions"><span class="sync-status">最后更新：2026-07-22 10:18</span><button class="btn" type="button" data-action="open-common-rules">配置通用规则</button><button class="btn btn--solid btn--color-primary" data-action="new-rule">新增规则</button></div>
       </header>
 
       <section class="c-filter surface-panel" data-component="QueryFilterBar">
         <div class="c-filter__row">
-          <label class="c-filter__field"><span class="c-filter__label">规则类型</span><div class="ui-select" data-filter="type"><span>全部类型</span><b>⌄</b></div></label>
-          <label class="c-filter__field"><span class="c-filter__label">状态</span><div class="ui-select" data-filter="status"><span>全部状态</span><b>⌄</b></div></label>
-          <label class="c-filter__field c-filter__field--search"><span class="c-filter__label">规则名称 / 关键词</span><input class="input" id="keywordInput" placeholder="请输入规则名称或关键词" /></label>
+          <label class="c-filter__field"><span class="c-filter__label">物流商</span><div class="ui-select" data-filter="carrier"><span>全部物流商</span><b>⌄</b></div></label>
+          <label class="c-filter__field"><span class="c-filter__label">物流渠道</span><div class="ui-select" data-filter="channel"><span>全部物流渠道</span><b>⌄</b></div></label>
+          <label class="c-filter__field"><span class="c-filter__label">查询状态</span><div class="ui-select" data-filter="queryEnabled"><span>全部状态</span><b>⌄</b></div></label>
+          <label class="c-filter__field c-filter__field--search"><span class="c-filter__label">物流商 / 物流渠道</span><input class="input" id="keywordInput" placeholder="请输入物流商或物流渠道" /></label>
           <div class="c-filter__actions"><button class="btn btn--solid btn--color-primary" data-action="search">查询</button><button class="btn" data-action="reset">重置</button></div>
         </div>
       </section>
@@ -50,7 +51,7 @@
       <section class="surface-panel c-table-panel" data-component="DataTablePanel">
         <div class="table-toolbar"><div class="table-toolbar__left"><strong>规则列表</strong><span class="text-tertiary" id="resultNote">共 2 条规则</span></div><div class="table-toolbar__right"><button class="btn btn--sm" data-action="refresh">刷新</button></div></div>
         <div class="table-scroll">
-          <table class="c-table" aria-label="物流规则列表"><thead><tr><th>规则名称</th><th>规则类型</th><th>匹配关键词</th><th>归类状态</th><th>状态</th><th>最近更新</th><th>操作</th></tr></thead><tbody id="ruleRows"></tbody></table>
+          <table class="c-table" aria-label="物流规则列表"><thead><tr><th>物流商</th><th>物流渠道</th><th>映射单号</th><th>查询状态</th><th>上网取值</th><th>交航取值</th><th>到达目的国取值</th><th>签收取值</th><th>最近更新</th><th>操作</th></tr></thead><tbody id="ruleRows"></tbody></table>
         </div>
         <div class="table-footer"><span>规则仅影响后续同步的轨迹，不回溯历史结果</span><div class="pagination"><span class="page-btn is-current">1</span></div></div>
       </section>
@@ -59,27 +60,19 @@
 
   <div class="toast" id="toast" role="status"></div>
   <div class="c-modal-mask" data-open="false" data-action="close-common-rules"></div>
-  <section class="c-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="commonRulesTitle">
-    <header class="c-modal__head"><div><h2 class="c-modal__title" id="commonRulesTitle">通用规则配置</h2><p class="c-modal__subtitle">查看通用节点与轨迹关键词的归类关系</p></div><button class="c-modal__close" type="button" data-action="close-common-rules" aria-label="关闭">×</button></header>
-    <div class="c-modal__body">
-      <aside class="common-rule-nav" aria-label="通用节点列表">
-        <div class="common-rule-nav__head"><strong>通用节点</strong><button class="btn btn--text btn--color-primary btn--sm" type="button" data-action="new-common-rule">+ 手动添加</button></div>
-        <div id="commonRuleNav"></div>
-      </aside>
-      <form class="common-rule-form" id="commonRuleForm">
-        <div class="common-rule-form__head"><div><div class="common-rule-detail__eyebrow">节点配置 · 可编辑</div><h3 id="commonRuleFormTitle">退回</h3></div><span class="tag tag--success" id="commonRuleStatusTag">已启用</span></div>
-        <div class="common-rule-form__grid">
-          <label class="common-rule-field"><span>节点名称</span><input class="input" name="name" required maxlength="30" placeholder="例如：退回" /></label>
-          <label class="common-rule-field"><span>归类结果</span><input class="input" name="result" required maxlength="30" placeholder="例如：包裹异常" /></label>
-          <label class="common-rule-field common-rule-field--wide"><span>适用范围</span><input class="input" name="scope" required maxlength="80" placeholder="例如：正向物流退回节点" /></label>
-          <label class="common-rule-field common-rule-field--wide"><span>规则说明</span><textarea class="input" name="description" required maxlength="160" rows="3" placeholder="描述该通用节点的识别和归类规则"></textarea></label>
-          <label class="common-rule-field common-rule-field--wide"><span>匹配关键词 <em>用逗号分隔</em></span><textarea class="input" name="keywords" required rows="3" placeholder="退回, 退件, returned"></textarea></label>
-          <label class="common-rule-field"><span>状态</span><input class="input" name="status" required maxlength="10" placeholder="已启用 / 已停用" /></label>
-        </div>
-        <div class="common-rule-form__note">命中任一关键词后，系统按归类结果生成业务节点；规则变更仅影响后续轨迹识别，历史结果不回溯。</div>
-        <footer class="c-modal__foot"><span class="modal-readonly" id="commonRuleUpdatedAt">最近更新：—</span><div class="c-modal__foot-actions"><button class="btn" type="button" data-action="close-common-rules">取消</button><button class="btn btn--solid btn--color-primary" type="submit">保存配置</button></div></footer>
-      </form>
-    </div>
+  <section class="c-modal c-rule-config-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="commonRulesTitle">
+    <header class="c-modal__head"><div><h2 class="c-modal__title" id="commonRulesTitle">添加规则</h2><p class="c-modal__subtitle">配置物流商轨迹取值与预警规则</p></div><button class="c-modal__close" type="button" data-action="close-common-rules" aria-label="关闭">×</button></header>
+    <form class="rule-config-form" id="commonRuleForm">
+      <div class="rule-config-basic">
+        <label class="rule-config-field"><span><em>*</em> 物流商：</span><div class="config-select-wrap"><input class="input config-select" name="carrier" value="请选择" readonly data-action="cycle-config-field" data-field="carrier" /><b>⌄</b></div></label>
+        <label class="rule-config-field"><span><em>*</em> 物流渠道：</span><div class="config-select-wrap"><input class="input config-select" name="channel" value="请选择" readonly data-action="cycle-config-field" data-field="channel" /><b>⌄</b></div></label>
+        <label class="rule-config-field rule-config-field--switch"><span>查询状态：</span><label class="toggle-control"><input type="checkbox" name="queryEnabled" checked /><i></i></label></label>
+        <label class="rule-config-field"><span><em>*</em> 映射单号：</span><div class="config-select-wrap"><input class="input config-select" name="mappingNo" value="请选择" readonly data-action="cycle-config-field" data-field="mappingNo" /><b>⌄</b></div></label>
+      </div>
+      <nav class="rule-config-tabs" aria-label="轨迹取值设置"><button class="rule-config-tab is-active" type="button" data-action="select-config-tab" data-tab="online">上网取值设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="handover">交航取值设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="arrived">达到目的国设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="signed">签收取值设置</button></nav>
+      <div id="ruleConfigPanel"></div>
+      <footer class="c-modal__foot"><span class="modal-readonly" id="commonRuleUpdatedAt">规则保存后仅影响后续轨迹识别</span><div class="c-modal__foot-actions"><button class="btn" type="button" data-action="close-common-rules">取消</button><button class="btn btn--solid btn--color-primary" type="submit">确定</button></div></footer>
+    </form>
   </section>
   <div class="c-drawer-mask" data-action="close-drawer"></div>
   <aside class="c-drawer" data-open="false" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
@@ -87,6 +80,6 @@
     <div class="c-drawer__body" id="drawerBody"></div>
     <footer class="c-drawer__foot"><button class="btn" data-action="close-drawer">取消</button><button class="btn btn--solid btn--color-primary" data-action="save-rule">保存规则</button></footer>
   </aside>
-  <script src="script.js?v=common-rules-edit"></script>
+  <script src="script.js?v=tracking-value-rules-v3"></script>
 </body>
 </html>
