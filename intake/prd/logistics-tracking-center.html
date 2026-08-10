@@ -108,6 +108,8 @@
     <p>在独立的物流规则页面维护轨迹原文与业务状态的归类规则，避免配置能力和包裹查询能力混在同一个模块中。</p>
     <h3>5.2 页面功能</h3>
     <table><tr><th>功能</th><th>要求</th><th>优先级</th></tr><tr><td>规则列表</td><td>展示规则名称、规则类型、匹配关键词、归类状态、启用状态、最近更新时间、操作人。</td><td class="priority">P0</td></tr><tr><td>规则筛选</td><td>支持按规则名称或关键词查询，支持重置。</td><td class="priority">P0</td></tr><tr><td>编辑规则</td><td>点击“编辑”打开右侧 Drawer，维护关键词；中文逗号、英文逗号和换行均可分隔。</td><td class="priority">P0</td></tr><tr><td>保存规则</td><td>至少保留一个关键词；保存后更新时间和操作人刷新。</td><td class="priority">P0</td></tr></table>
+    <h3>5.2.1 通用规则配置</h3>
+    <table><tr><th>交互</th><th>要求</th><th>优先级</th></tr><tr><td>打开配置</td><td>物流规则页面右上角新增“配置通用规则”按钮；点击打开居中的 Modal，不离开当前列表。</td><td class="priority">P0</td></tr><tr><td>节点切换</td><td>弹窗左侧展示通用节点列表，当前包含“退回”“丢件”“派送失败”；点击节点后右侧刷新对应配置。</td><td class="priority">P0</td></tr><tr><td>配置查看</td><td>右侧展示节点描述、归类结果、适用范围、匹配关键词、启用状态和最近更新时间；本期为只读查看。</td><td class="priority">P0</td></tr><tr><td>关闭弹窗</td><td>支持关闭按钮、遮罩点击和 ESC 关闭；关闭后保留原列表筛选状态。</td><td class="priority">P0</td></tr></table>
     <h3>5.3 初始规则</h3>
     <table><tr><th>规则名称</th><th>匹配关键词示例</th><th>归类结果</th></tr><tr><td>丢件</td><td>丢件、包裹丢失、无法找回、package lost、lost parcel</td><td>包裹异常</td></tr><tr><td>派送失败</td><td>派送失败、投递失败、delivery failed、unable to deliver</td><td>包裹异常</td></tr></table>
     <h3>5.4 页面边界</h3>

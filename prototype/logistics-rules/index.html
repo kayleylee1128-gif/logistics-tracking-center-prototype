@@ -35,7 +35,7 @@
     <main class="c-shell__content">
       <header class="c-page-header">
         <div class="c-page-header__left"><h1 class="c-page-header__title">物流规则</h1><p class="c-page-header__desc">维护轨迹原文与业务状态的归类规则，保存后影响后续轨迹识别。</p></div>
-        <div class="c-page-header__actions"><span class="sync-status">最后更新：2026-07-22 10:18</span><button class="btn btn--solid btn--color-primary" data-action="new-rule">新增规则</button></div>
+        <div class="c-page-header__actions"><span class="sync-status">最后更新：2026-07-22 10:18</span><button class="btn" type="button" data-action="open-common-rules">配置通用规则</button><button class="btn btn--solid btn--color-primary" data-action="new-rule">新增规则</button></div>
       </header>
 
       <section class="c-filter surface-panel" data-component="QueryFilterBar">
@@ -58,6 +58,12 @@
   </div>
 
   <div class="toast" id="toast" role="status"></div>
+  <div class="c-modal-mask" data-open="false" data-action="close-common-rules"></div>
+  <section class="c-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="commonRulesTitle">
+    <header class="c-modal__head"><div><h2 class="c-modal__title" id="commonRulesTitle">通用规则配置</h2><p class="c-modal__subtitle">查看通用节点与轨迹关键词的归类关系</p></div><button class="c-modal__close" type="button" data-action="close-common-rules" aria-label="关闭">×</button></header>
+    <div class="c-modal__body"><aside class="common-rule-nav" id="commonRuleNav"></aside><div class="common-rule-detail" id="commonRuleDetail"></div></div>
+    <footer class="c-modal__foot"><span class="modal-readonly">只读查看 · 配置变更请走规则维护流程</span><button class="btn" type="button" data-action="close-common-rules">关闭</button></footer>
+  </section>
   <div class="c-drawer-mask" data-action="close-drawer"></div>
   <aside class="c-drawer" data-open="false" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
     <div class="c-drawer__head"><div><h2 class="c-drawer__title" id="drawerTitle">编辑物流规则</h2><div class="drawer-subtitle" id="drawerSubtitle">—</div></div><button class="c-drawer__close" type="button" data-action="close-drawer" aria-label="关闭">×</button></div>
