@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>物流规则</title>
   <link rel="stylesheet" href="./tokens.css" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=tracking-value-rules-v5" />
 </head>
 <body>
   <div class="c-shell" data-collapsed="false">
@@ -33,12 +33,18 @@
     <nav class="c-shell__crumb" aria-label="面包屑"><a href="#">工作台</a><span class="c-shell__crumb-sep">/</span><a href="#">物流管理</a><span class="c-shell__crumb-sep">/</span><span class="c-shell__crumb-current">物流规则</span></nav>
 
     <main class="c-shell__content">
-      <header class="c-page-header">
+      <header class="c-page-header" id="pageHeader" data-annotation-target="pageHeader">
         <div class="c-page-header__left"><h1 class="c-page-header__title">物流规则</h1><p class="c-page-header__desc">维护物流商轨迹取值与预警规则，保存后影响后续轨迹识别。</p></div>
-        <div class="c-page-header__actions"><span class="sync-status">最后更新：2026-07-22 10:18</span><button class="btn" type="button" data-action="open-common-rules">配置通用规则</button><button class="btn btn--solid btn--color-primary" data-action="new-rule">新增规则</button></div>
+        <div class="c-page-header__actions"><span class="sync-status">最后更新：2026-07-22 10:18</span><button class="annotation-toggle" type="button" data-action="toggle-annotations">关闭标注</button><button class="btn" type="button" id="commonNodeEntry" data-annotation-target="commonNodeEntry" data-action="open-common-nodes">通用节点配置</button><button class="btn btn--solid btn--color-primary" id="channelRuleEntry" data-annotation-target="channelRuleEntry" data-action="new-rule">新增渠道规则</button></div>
       </header>
 
-      <section class="c-filter surface-panel" data-component="QueryFilterBar">
+      <section class="rule-architecture-note" aria-label="规则分层说明">
+        <div class="rule-architecture-note__icon">↗</div>
+        <div class="rule-architecture-note__copy"><strong>规则分层</strong><span>先维护业务统一口径，再按承运商渠道适配原始轨迹</span></div>
+        <div class="rule-architecture-note__flow"><span class="architecture-chip architecture-chip--standard">通用节点</span><span class="architecture-arrow">→</span><span class="architecture-chip architecture-chip--channel">渠道规则</span><span class="architecture-arrow">→</span><span class="architecture-chip architecture-chip--result">轨迹中心 / 异常报表</span></div>
+      </section>
+
+      <section class="c-filter surface-panel" id="ruleFilter" data-annotation-target="ruleFilter" data-component="QueryFilterBar">
         <div class="c-filter__row">
           <label class="c-filter__field"><span class="c-filter__label">物流商</span><div class="ui-select" data-filter="carrier"><span>全部物流商</span><b>⌄</b></div></label>
           <label class="c-filter__field"><span class="c-filter__label">物流渠道</span><div class="ui-select" data-filter="channel"><span>全部物流渠道</span><b>⌄</b></div></label>
@@ -48,12 +54,12 @@
         </div>
       </section>
 
-      <section class="surface-panel c-table-panel" data-component="DataTablePanel">
+      <section class="surface-panel c-table-panel" id="ruleTable" data-annotation-target="ruleTable" data-component="DataTablePanel">
         <div class="table-toolbar"><div class="table-toolbar__left"><strong>规则列表</strong><span class="text-tertiary" id="resultNote">共 2 条规则</span></div><div class="table-toolbar__right"><button class="btn btn--sm" data-action="refresh">刷新</button></div></div>
         <div class="table-scroll">
           <table class="c-table" aria-label="物流规则列表"><thead><tr><th>物流商</th><th>物流渠道</th><th>映射单号</th><th>查询状态</th><th>上网取值</th><th>交航取值</th><th>到达目的国取值</th><th>签收取值</th><th>最近更新</th><th>操作</th></tr></thead><tbody id="ruleRows"></tbody></table>
         </div>
-        <div class="table-footer"><span>规则仅影响后续同步的轨迹，不回溯历史结果</span><div class="pagination"><span class="page-btn is-current">1</span></div></div>
+        <div class="table-footer" id="ruleFooter" data-annotation-target="ruleFooter"><span>规则仅影响后续同步的轨迹，不回溯历史结果</span><div class="pagination"><span class="page-btn is-current">1</span></div></div>
       </section>
     </main>
   </div>
@@ -74,12 +80,40 @@
       <footer class="c-modal__foot"><span class="modal-readonly" id="commonRuleUpdatedAt">规则保存后仅影响后续轨迹识别</span><div class="c-modal__foot-actions"><button class="btn" type="button" data-action="close-common-rules">取消</button><button class="btn btn--solid btn--color-primary" type="submit">确定</button></div></footer>
     </form>
   </section>
+
+  <div class="c-modal-mask common-node-mask" data-open="false" data-action="close-common-nodes"></div>
+  <section class="c-modal common-node-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="commonNodeTitle">
+    <header class="c-modal__head"><div><h2 class="c-modal__title" id="commonNodeTitle">通用节点配置</h2><p class="c-modal__subtitle">维护系统统一的标准业务节点，渠道规则通过映射引用。</p></div><button class="c-modal__close" type="button" data-action="close-common-nodes" aria-label="关闭">×</button></header>
+    <div class="common-node-layout">
+      <aside class="common-node-list"><div class="common-node-list__head"><div><strong>标准节点</strong><span class="common-node-list__count" id="commonNodeCount">5 个</span></div><button class="btn btn--text btn--color-primary btn--sm" type="button" data-action="new-common-node">+ 新增节点</button></div><div id="commonNodeList"></div></aside>
+      <form class="common-node-form" id="commonNodeForm">
+        <div class="common-node-form__title"><div><span class="common-rule-kicker">标准业务节点</span><h3 id="commonNodeFormTitle">退回中</h3></div><span class="tag tag--success" id="commonNodeStatus">启用</span></div>
+        <div class="common-node-fields">
+          <label class="form-field"><span>节点名称</span><input class="input" name="name" required maxlength="30" placeholder="例如：退回中" /></label>
+          <label class="form-field"><span>节点编码</span><input class="input" name="code" required maxlength="40" placeholder="例如：RETURNING" /></label>
+          <label class="form-field"><span>物流方向</span><input class="input" name="direction" required maxlength="20" placeholder="正向 / 逆向 / 通用" /></label>
+          <label class="form-field"><span>所属阶段</span><input class="input" name="phase" required maxlength="20" placeholder="运输 / 退回 / 异常" /></label>
+          <label class="form-field common-node-field--wide"><span>节点说明</span><textarea class="input" name="description" required maxlength="120" rows="3" placeholder="描述节点的业务含义和使用边界"></textarea></label>
+          <label class="form-field"><span>是否终态</span><input class="input" name="terminal" required maxlength="10" placeholder="是 / 否" /></label>
+          <label class="form-field"><span>状态</span><input class="input" name="enabled" required maxlength="10" placeholder="启用 / 停用" /></label>
+        </div>
+        <div class="common-node-note">渠道规则只配置原始轨迹如何映射到标准节点；标准节点名称和编码作为物流轨迹中心、报表和异常统计的统一口径。</div>
+        <footer class="c-modal__foot"><span class="modal-readonly" id="commonNodeUpdatedAt">最近更新：—</span><div class="c-modal__foot-actions"><button class="btn" type="button" data-action="close-common-nodes">取消</button><button class="btn btn--solid btn--color-primary" type="submit">保存节点</button></div></footer>
+      </form>
+    </div>
+  </section>
   <div class="c-drawer-mask" data-action="close-drawer"></div>
   <aside class="c-drawer" data-open="false" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
     <div class="c-drawer__head"><div><h2 class="c-drawer__title" id="drawerTitle">编辑物流规则</h2><div class="drawer-subtitle" id="drawerSubtitle">—</div></div><button class="c-drawer__close" type="button" data-action="close-drawer" aria-label="关闭">×</button></div>
     <div class="c-drawer__body" id="drawerBody"></div>
     <footer class="c-drawer__foot"><button class="btn" data-action="close-drawer">取消</button><button class="btn btn--solid btn--color-primary" data-action="save-rule">保存规则</button></footer>
   </aside>
-  <script src="script.js?v=tracking-value-rules-v3"></script>
+  <div class="annotation-markers" aria-hidden="true"></div>
+  <aside class="annotation-drawer" data-open="true" aria-label="原型标注">
+    <header class="annotation-drawer__head"><div><h2>原型标注 <span id="annotationTotal">0</span></h2><p>点击条目定位页面中的对应区域</p></div><button type="button" class="annotation-drawer__close" data-action="toggle-annotations" aria-label="关闭标注">×</button></header>
+    <nav class="annotation-filters" id="annotationFilters"></nav>
+    <div class="annotation-list" id="annotationList"></div>
+  </aside>
+  <script src="script.js?v=tracking-value-rules-v4"></script>
 </body>
 </html>
