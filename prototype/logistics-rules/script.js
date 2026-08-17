@@ -52,12 +52,36 @@ const commonNodes = [
   { id: 'delivery-failed', name: '派送失败', code: 'DELIVERY_FAILED', direction: '正向', phase: '异常', description: '末端派送未成功，需重新派送或人工处理。', terminal: '否', enabled: '启用', updatedAt: '2026-07-21 16:42', operator: 'Fiona' }
 ];
 
+const commonKeywordSeed = {
+  returning: { includeKeywords: ['退回', 'returned to sender', 'return to sender'], excludeKeywords: ['已签收', 'delivered'] },
+  'return-received': { includeKeywords: ['退回签收', 'return received', 'returned'], excludeKeywords: [] },
+  'package-lost': { includeKeywords: ['丢件', 'lost', 'missing package', '无法投递'], excludeKeywords: ['找到包裹', 'located'] },
+  'package-damaged': { includeKeywords: ['破损', 'damaged', '损坏', 'broken'], excludeKeywords: [] },
+  'delivery-failed': { includeKeywords: ['派送失败', 'delivery failed', 'attempted delivery', 'delivery exception'], excludeKeywords: ['已签收', 'delivered'] }
+};
+
+commonNodes.forEach((node) => {
+  const seed = commonKeywordSeed[node.id] || { includeKeywords: [], excludeKeywords: [] };
+  node.matchMode = node.matchMode || '任一关键词命中';
+  node.includeKeywords = node.includeKeywords || [...seed.includeKeywords];
+  node.excludeKeywords = node.excludeKeywords || [...seed.excludeKeywords];
+});
+
+function ensureNodeRules(config) {
+  config.nodeRules = config.nodeRules || {};
+  commonNodes.forEach((node) => {
+    config.nodeRules[node.id] = config.nodeRules[node.id] || { inheritCommon: true, includeKeywords: [], excludeKeywords: [] };
+  });
+  return config.nodeRules;
+}
+
 let activeConfigId = 'r1';
 let activeConfigTab = 'online';
 let configIsNew = false;
 let filterState = { carrier: '全部物流商', channel: '全部物流渠道', queryEnabled: '全部状态' };
 let activeCommonNodeId = 'returning';
 let commonNodeIsNew = false;
+let activeChannelNodeId = 'returning';
 let annotationMode = true;
 let annotationFilter = '全部';
 let activeAnnotationId = null;
@@ -84,9 +108,9 @@ function phaseSummary(config, phase) {
 const annotations = [
   { id: 1, type: '页面', title: '物流规则页面', target: 'pageHeader', description: '模块目的：维护渠道规则与标准节点。适用角色为物流运营和管理员；入口来自物流配置菜单，上游是承运商轨迹，下游是物流轨迹中心和异常报表。' },
   { id: 2, type: '字段', title: '渠道筛选条件', target: 'ruleFilter', description: '按物流商、物流渠道和查询状态筛选渠道规则；默认全部，数据来源为规则配置列表，点击查询后刷新结果。' },
-  { id: 3, type: '交互', title: '通用节点配置', target: 'commonNodeEntry', description: '点击打开通用节点配置 Modal，维护标准节点名称、编码、方向、阶段和终态属性；保存后供渠道规则映射引用，不跳转新页面。' },
+  { id: 3, type: '交互', title: '通用节点配置', target: 'commonNodeEntry', description: '点击右上角入口打开弹窗，维护标准节点属性及通用默认关键词、排除关键词；保存后作为所有渠道的基础识别规则，不跳转新页面。' },
   { id: 4, type: '交互', title: '新增渠道规则', target: 'channelRuleEntry', description: '点击打开渠道规则表单，配置物流商、物流渠道、映射单号、四类轨迹取值规则和预警天数；必填项缺失时阻断保存。' },
-  { id: 5, type: '规则', title: '渠道规则映射', target: 'ruleTable', description: '渠道维度只负责适配承运商原始轨迹，最终应映射到通用节点；同一标准节点可被多个渠道复用，避免业务统计口径分裂。' },
+  { id: 5, type: '规则', title: '渠道规则映射', target: 'ruleTable', description: '渠道维度继承通用关键词，只维护承运商差异化的补充词和排除词；最终映射到统一节点，避免每个渠道重复维护整套规则。' },
   { id: 6, type: '规则', title: '取值与预警', target: 'ruleFooter', description: '上网、交航、到达目的国、签收分别配置轨迹判断方式；预警天数按当前时间与交运时间的差值判断，历史结果不回溯。' },
   { id: 7, type: '待确认', title: '节点权限与审批', target: 'commonNodeEntry', description: '待确认：通用节点新增、停用、编码变更是否需要管理员权限和审批。影响节点字典稳定性、审计和历史报表口径。' }
 ];
@@ -167,7 +191,27 @@ function renderRows() {
 }
 
 function renderTags(items, kind) {
-  return items.map((item, index) => `<span class="tag tag--default config-keyword-tag">${item}<button type="button" data-action="remove-keyword" data-kind="${kind}" data-index="${index}" aria-label="删除${item}">×</button></span>`).join('');
+  const removable = !['readonly'].includes(kind);
+  return items.map((item, index) => `<span class="tag tag--default config-keyword-tag">${item}${removable ? `<button type="button" data-action="remove-keyword" data-kind="${kind}" data-index="${index}" aria-label="删除${item}">×</button>` : ''}</span>`).join('');
+}
+
+function renderChannelNodeRule(config) {
+  ensureNodeRules(config);
+  const node = commonNodes.find((item) => item.id === activeChannelNodeId) || commonNodes[0];
+  activeChannelNodeId = node.id;
+  const rule = config.nodeRules[node.id];
+  const globalInclude = node.includeKeywords || [];
+  const globalExclude = node.excludeKeywords || [];
+  const effectiveInclude = [...new Set([...(rule.inheritCommon ? globalInclude : []), ...rule.includeKeywords])];
+  const effectiveExclude = [...new Set([...(rule.inheritCommon ? globalExclude : []), ...rule.excludeKeywords])];
+  return `<section class="channel-node-rule-card">
+    <div class="channel-node-rule-card__head"><div><span class="common-rule-kicker">节点关键词映射</span><strong>渠道差异只维护补充项</strong><p>渠道默认继承通用节点词，只有承运商特殊表达才在这里新增或排除。</p></div><label class="inherit-switch"><input type="checkbox" data-action="toggle-node-inherit" ${rule.inheritCommon ? 'checked' : ''} /><span></span><b>继承通用规则</b></label></div>
+    <div class="channel-node-selector"><span>标准节点</span><select class="input" id="channelNodeSelect" data-action="select-channel-node">${commonNodes.map((item) => `<option value="${item.id}" ${item.id === node.id ? 'selected' : ''}>${item.name} · ${item.code}</option>`).join('')}</select><span class="channel-node-selector__hint">当前渠道：${config.channel === '请选择' ? '待选择' : config.channel}</span></div>
+    <div class="keyword-source-grid"><div><span class="keyword-source-label">通用默认关键词</span><div class="keyword-source-tags">${renderTags(globalInclude, 'readonly')}</div></div><div><span class="keyword-source-label">通用排除关键词</span><div class="keyword-source-tags">${renderTags(globalExclude, 'readonly')}</div></div></div>
+    <div class="channel-keyword-editor"><div class="common-keyword-row"><span>渠道补充关键词</span><input class="input" id="channelIncludeKeywordInput" placeholder="例如：承运商专属英文状态" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-channel-keyword" data-kind="include">添加</button></div><div class="config-keyword-list channel-keyword-list">${renderTags(rule.includeKeywords, 'channel-include')}</div>
+    <div class="common-keyword-row"><span>渠道排除关键词</span><input class="input" id="channelExcludeKeywordInput" placeholder="例如：仅表示已签收的状态" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-channel-keyword" data-kind="exclude">添加</button></div><div class="config-keyword-list channel-keyword-list">${renderTags(rule.excludeKeywords, 'channel-exclude')}</div></div>
+    <div class="effective-rule-preview"><span>最终生效</span><div><strong>${effectiveInclude.length} 个命中词</strong><em>+</em><strong>${effectiveExclude.length} 个排除词</strong><small>保存后仅影响当前物流渠道，不改变通用节点口径。</small></div></div>
+  </section>`;
 }
 
 function renderConfigPanel() {
@@ -176,7 +220,7 @@ function renderConfigPanel() {
   const setting = config.phases[activeConfigTab];
   const label = phaseLabels[activeConfigTab];
   $$('.rule-config-tab').forEach((tab) => tab.classList.toggle('is-active', tab.dataset.tab === activeConfigTab));
-  $('#ruleConfigPanel').innerHTML = `<section class="config-section"><div class="config-section__title">轨迹取值规则</div>
+  $('#ruleConfigPanel').innerHTML = renderChannelNodeRule(config) + `<section class="config-section"><div class="config-section__title">轨迹取值规则</div>
     <div class="config-count-row"><label class="config-radio"><input type="radio" name="trackMode" value="count" ${setting.mode === 'count' ? 'checked' : ''} data-action="change-track-mode" /> <span>选定</span></label><input class="input config-number" type="number" min="0" name="selectedCount" value="${setting.selectedCount || 0}" /> <span>条轨迹，判断为${label}轨迹</span></div>
     <div class="keyword-rule-box"><label class="config-radio config-radio--description"><input type="radio" name="trackMode" value="keyword" ${setting.mode === 'keyword' ? 'checked' : ''} data-action="change-track-mode" /><span>轨迹关键词（第一次抓到当前填写的关键词的某条轨迹，即为该条轨迹判断为${label}）</span></label>
       <div class="keyword-input-row"><span>轨迹关键词：</span><input class="input" id="includeKeywordInput" placeholder="请输入关键词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-keyword" data-kind="include">添加</button></div><div class="config-keyword-list">${renderTags(setting.includeKeywords, 'include')}</div>
@@ -202,6 +246,8 @@ function openChannelRule(id = activeConfigId, isNew = false) {
   activeConfigId = id;
   configIsNew = isNew;
   activeConfigTab = 'online';
+  activeChannelNodeId = 'returning';
+  ensureNodeRules(currentConfig());
   fillConfigForm();
   $('.c-modal').dataset.open = 'true';
   $('.c-modal-mask').dataset.open = 'true';
@@ -224,7 +270,17 @@ function renderCommonNodeList() {
   const selected = currentCommonNode() || commonNodes[0];
   activeCommonNodeId = selected.id;
   $('#commonNodeCount').textContent = `${commonNodes.length} 个`;
-  $('#commonNodeList').innerHTML = commonNodes.map((node) => `<button class="common-node-list__item${node.id === selected.id ? ' is-active' : ''}" type="button" data-action="select-common-node" data-id="${node.id}"><strong>${node.name || '未命名节点'}</strong><span>${node.code}</span></button>`).join('');
+  $('#commonNodeList').innerHTML = commonNodes.map((node) => `<button class="common-node-list__item${node.id === selected.id ? ' is-active' : ''}" type="button" data-action="select-common-node" data-id="${node.id}"><strong>${node.name || '未命名节点'}</strong><span>${node.code}</span><small>通用词 ${node.includeKeywords?.length || 0} · 排除词 ${node.excludeKeywords?.length || 0}</small></button>`).join('');
+}
+
+function renderCommonNodeKeywordConfig() {
+  const node = currentCommonNode();
+  if (!node || !$('#commonNodeKeywordConfig')) return;
+  $('#commonNodeKeywordConfig').innerHTML = `<div class="common-keyword-config__head"><div><strong>通用默认关键词</strong><span>作为所有渠道的基础识别词，渠道可在规则中补充或排除</span></div><span class="tag tag--processing">${node.matchMode}</span></div>
+    <div class="common-keyword-row"><span>命中关键词</span><input class="input" id="commonIncludeKeywordInput" placeholder="输入中文或英文状态词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-common-keyword" data-kind="include">添加</button></div>
+    <div class="config-keyword-list common-keyword-list">${renderTags(node.includeKeywords, 'common-include')}</div>
+    <div class="common-keyword-row"><span>排除关键词</span><input class="input" id="commonExcludeKeywordInput" placeholder="避免误判的状态词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-common-keyword" data-kind="exclude">添加</button></div>
+    <div class="config-keyword-list common-keyword-list">${renderTags(node.excludeKeywords, 'common-exclude')}</div>`;
 }
 
 function fillCommonNodeForm() {
@@ -241,6 +297,7 @@ function fillCommonNodeForm() {
   form.elements.description.value = node.description;
   form.elements.terminal.value = node.terminal;
   form.elements.enabled.value = node.enabled;
+  renderCommonNodeKeywordConfig();
   $('#commonNodeUpdatedAt').textContent = node.updatedAt === '未保存' ? '新建节点 · 尚未保存' : `最近更新：${node.updatedAt} · ${node.operator}`;
 }
 
@@ -350,10 +407,59 @@ document.addEventListener('click', (event) => {
     input.value = '';
     renderConfigPanel();
   }
-  if (action === 'remove-keyword') { const target = event.target.closest('[data-action="remove-keyword"]'); const list = currentConfig().phases[activeConfigTab][target.dataset.kind === 'include' ? 'includeKeywords' : 'excludeKeywords']; list.splice(Number(target.dataset.index), 1); renderConfigPanel(); }
+  if (action === 'add-common-keyword') {
+    const kind = event.target.closest('[data-kind]').dataset.kind;
+    const input = $(`#common${kind === 'include' ? 'Include' : 'Exclude'}KeywordInput`);
+    const value = input.value.trim();
+    if (!value) return;
+    const node = currentCommonNode();
+    node[`${kind}Keywords`].push(value);
+    input.value = '';
+    renderCommonNodeList();
+    renderCommonNodeKeywordConfig();
+  }
+  if (action === 'add-channel-keyword') {
+    const kind = event.target.closest('[data-kind]').dataset.kind;
+    const input = $(`#channel${kind === 'include' ? 'Include' : 'Exclude'}KeywordInput`);
+    const value = input.value.trim();
+    if (!value) return;
+    const rule = ensureNodeRules(currentConfig())[activeChannelNodeId];
+    rule[`${kind}Keywords`].push(value);
+    input.value = '';
+    renderConfigPanel();
+  }
+  if (action === 'remove-keyword') {
+    const target = event.target.closest('[data-action="remove-keyword"]');
+    const kind = target.dataset.kind;
+    if (kind.startsWith('common-')) {
+      const node = currentCommonNode();
+      node[`${kind === 'common-include' ? 'include' : 'exclude'}Keywords`].splice(Number(target.dataset.index), 1);
+      renderCommonNodeList();
+      renderCommonNodeKeywordConfig();
+    } else if (kind.startsWith('channel-')) {
+      const rule = ensureNodeRules(currentConfig())[activeChannelNodeId];
+      rule[`${kind === 'channel-include' ? 'include' : 'exclude'}Keywords`].splice(Number(target.dataset.index), 1);
+      renderConfigPanel();
+    } else {
+      const list = currentConfig().phases[activeConfigTab][kind === 'include' ? 'includeKeywords' : 'excludeKeywords'];
+      list.splice(Number(target.dataset.index), 1);
+      renderConfigPanel();
+    }
+  }
   if (action === 'refresh') { renderRows(); showToast('规则列表已刷新'); }
   if (action === 'search') { renderRows(); showToast('已按当前条件查询'); }
   if (action === 'reset') { $('#keywordInput').value = ''; filterState = { carrier: '全部物流商', channel: '全部物流渠道', queryEnabled: '全部状态' }; $$('.ui-select').forEach((item) => { item.querySelector('span').textContent = item.dataset.filter === 'carrier' ? '全部物流商' : item.dataset.filter === 'channel' ? '全部物流渠道' : '全部状态'; }); renderRows(); showToast('筛选条件已重置'); }
+});
+
+document.addEventListener('change', (event) => {
+  if (event.target.matches('[data-action="select-channel-node"]')) {
+    activeChannelNodeId = event.target.value;
+    renderConfigPanel();
+  }
+  if (event.target.matches('[data-action="toggle-node-inherit"]')) {
+    ensureNodeRules(currentConfig())[activeChannelNodeId].inheritCommon = event.target.checked;
+    renderConfigPanel();
+  }
 });
 
 $$('[data-filter]').forEach((filter) => filter.addEventListener('click', () => {
