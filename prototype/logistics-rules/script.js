@@ -105,11 +105,18 @@ function phaseSummary(config, phase) {
   return setting.includeKeywords.length ? `关键词 ${setting.includeKeywords.length} 条` : '未配置';
 }
 
+function legacyRuleSummary(config, phase) {
+  const setting = config.phases[phase];
+  if (setting.mode === 'count') return `选定第${setting.selectedCount || 0}条轨迹判断为${phaseLabels[phase]}`;
+  if (!setting.includeKeywords.length) return `选定第0条轨迹判断为${phaseLabels[phase]}`;
+  return `关键词：${setting.includeKeywords.slice(0, 2).join('、')}`;
+}
+
 const annotations = [
   { id: 1, type: '页面', title: '物流规则页面', target: 'pageHeader', description: '模块目的：维护渠道规则与标准节点。适用角色为物流运营和管理员；入口来自物流配置菜单，上游是承运商轨迹，下游是物流轨迹中心和异常报表。' },
   { id: 2, type: '字段', title: '渠道筛选条件', target: 'ruleFilter', description: '按物流商、物流渠道和查询状态筛选渠道规则；默认全部，数据来源为规则配置列表，点击查询后刷新结果。' },
   { id: 3, type: '交互', title: '通用节点配置', target: 'commonNodeEntry', description: '点击右上角入口打开弹窗，维护标准节点属性及通用默认关键词、排除关键词；保存后作为所有渠道的基础识别规则，不跳转新页面。' },
-  { id: 4, type: '交互', title: '新增渠道规则', target: 'channelRuleEntry', description: '点击打开渠道规则表单，配置物流商、物流渠道、映射单号、四类轨迹取值规则和预警天数；必填项缺失时阻断保存。' },
+  { id: 4, type: '交互', title: '添加规则', target: 'channelRuleEntry', description: '点击打开渠道规则表单，保留原有物流商、物流渠道、映射单号和轨迹取值设置，并在编辑区域选择对应通用节点；必填项缺失时阻断保存。' },
   { id: 5, type: '规则', title: '渠道规则映射', target: 'ruleTable', description: '渠道维度继承通用关键词，只维护承运商差异化的补充词和排除词；最终映射到统一节点，避免每个渠道重复维护整套规则。' },
   { id: 6, type: '规则', title: '取值与预警', target: 'ruleFooter', description: '上网、交航、到达目的国、签收分别配置轨迹判断方式；预警天数按当前时间与交运时间的差值判断，历史结果不回溯。' },
   { id: 7, type: '待确认', title: '节点权限与审批', target: 'commonNodeEntry', description: '待确认：通用节点新增、停用、编码变更是否需要管理员权限和审批。影响节点字典稳定性、审计和历史报表口径。' }
@@ -176,16 +183,16 @@ function renderRows() {
     return keywordMatch && carrierMatch && channelMatch && statusMatch;
   });
   $('#ruleRows').innerHTML = rows.length ? rows.map((rule) => `<tr>
+    <td class="selection-col"><input type="checkbox" aria-label="选择${rule.channel}" /></td>
     <td><span class="rule-name">${rule.carrier}</span></td>
     <td>${rule.channel}</td>
-    <td>${rule.mappingNo}</td>
-    <td><span class="tag ${rule.queryEnabled ? 'tag--success' : 'tag--default'}">${rule.queryEnabled ? '启用' : '停用'}</span></td>
-    <td><span class="cell-muted">${phaseSummary(rule, 'online')}</span></td>
-    <td><span class="cell-muted">${phaseSummary(rule, 'handover')}</span></td>
-    <td><span class="cell-muted">${phaseSummary(rule, 'arrived')}</span></td>
-    <td><span class="cell-muted">${phaseSummary(rule, 'signed')}</span></td>
+    <td><div class="legacy-rule-lines"><span>收货：${legacyRuleSummary(rule, 'online')}</span><span>出运：${legacyRuleSummary(rule, 'online')}</span><span>提取：${legacyRuleSummary(rule, 'online')}</span></div></td>
+    <td><div class="legacy-rule-lines"><span>到港：${legacyRuleSummary(rule, 'handover')}</span><span>清关：${legacyRuleSummary(rule, 'handover')}</span></div></td>
+    <td><div class="legacy-rule-lines"><span>起运：${legacyRuleSummary(rule, 'arrived')}</span></div></td>
+    <td><div class="legacy-rule-lines"><span>${legacyRuleSummary(rule, 'signed')}</span></div></td>
+    <td><span class="legacy-status-switch ${rule.queryEnabled ? 'is-on' : ''}"><i></i></span></td>
     <td>${rule.updatedAt}<span class="cell-muted">${rule.operator}</span></td>
-    <td><button class="btn btn--sm btn--text btn--color-primary" data-action="edit-rule" data-id="${rule.id}">编辑</button></td>
+    <td><div class="legacy-actions"><button type="button" data-action="edit-rule" data-id="${rule.id}">编辑</button><button type="button" data-action="copy-rule" data-id="${rule.id}">复制</button><button type="button" data-action="delete-rule" data-id="${rule.id}">删除</button></div></td>
   </tr>`).join('') : '<tr><td colspan="10"><div class="empty-state">未找到符合条件的规则，请调整筛选条件。</div></td></tr>';
   $('#resultNote').textContent = `共 ${rows.length} 条规则`;
 }
@@ -205,8 +212,8 @@ function renderChannelNodeRule(config) {
   const effectiveInclude = [...new Set([...(rule.inheritCommon ? globalInclude : []), ...rule.includeKeywords])];
   const effectiveExclude = [...new Set([...(rule.inheritCommon ? globalExclude : []), ...rule.excludeKeywords])];
   return `<section class="channel-node-rule-card">
-    <div class="channel-node-rule-card__head"><div><span class="common-rule-kicker">节点关键词映射</span><strong>渠道差异只维护补充项</strong><p>渠道默认继承通用节点词，只有承运商特殊表达才在这里新增或排除。</p></div><label class="inherit-switch"><input type="checkbox" data-action="toggle-node-inherit" ${rule.inheritCommon ? 'checked' : ''} /><span></span><b>继承通用规则</b></label></div>
-    <div class="channel-node-selector"><span>标准节点</span><select class="input" id="channelNodeSelect" data-action="select-channel-node">${commonNodes.map((item) => `<option value="${item.id}" ${item.id === node.id ? 'selected' : ''}>${item.name} · ${item.code}</option>`).join('')}</select><span class="channel-node-selector__hint">当前渠道：${config.channel === '请选择' ? '待选择' : config.channel}</span></div>
+    <div class="channel-node-rule-card__head"><div><span class="common-rule-kicker">对应节点配置</span><strong>选择通用节点</strong><p>当前物流渠道按所选节点识别轨迹，渠道差异词可在此补充。</p></div><label class="inherit-switch"><input type="checkbox" data-action="toggle-node-inherit" ${rule.inheritCommon ? 'checked' : ''} /><span></span><b>继承通用规则</b></label></div>
+    <div class="channel-node-selector"><span>对应节点</span><select class="input" id="channelNodeSelect" data-action="select-channel-node">${commonNodes.map((item) => `<option value="${item.id}" ${item.id === node.id ? 'selected' : ''}>${item.name} · ${item.code}</option>`).join('')}</select><span class="channel-node-selector__hint">当前渠道：${config.channel === '请选择' ? '待选择' : config.channel}</span></div>
     <div class="keyword-source-grid"><div><span class="keyword-source-label">通用默认关键词</span><div class="keyword-source-tags">${renderTags(globalInclude, 'readonly')}</div></div><div><span class="keyword-source-label">通用排除关键词</span><div class="keyword-source-tags">${renderTags(globalExclude, 'readonly')}</div></div></div>
     <div class="channel-keyword-editor"><div class="common-keyword-row"><span>渠道补充关键词</span><input class="input" id="channelIncludeKeywordInput" placeholder="例如：承运商专属英文状态" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-channel-keyword" data-kind="include">添加</button></div><div class="config-keyword-list channel-keyword-list">${renderTags(rule.includeKeywords, 'channel-include')}</div>
     <div class="common-keyword-row"><span>渠道排除关键词</span><input class="input" id="channelExcludeKeywordInput" placeholder="例如：仅表示已签收的状态" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-channel-keyword" data-kind="exclude">添加</button></div><div class="config-keyword-list channel-keyword-list">${renderTags(rule.excludeKeywords, 'channel-exclude')}</div></div>
@@ -389,8 +396,14 @@ document.addEventListener('click', (event) => {
   if (action === 'focus-annotation') { focusAnnotation(id); return; }
   if (action === 'collapse') { const shell = $('.c-shell'); shell.dataset.collapsed = shell.dataset.collapsed === 'true' ? 'false' : 'true'; }
   if (action === 'open-common-nodes') openCommonNodes();
+  if (action === 'switch-legacy-tab') {
+    $$('.legacy-rule-tab').forEach((tab) => tab.classList.toggle('is-active', tab === event.target.closest('.legacy-rule-tab')));
+    showToast(`已切换${event.target.closest('.legacy-rule-tab').textContent.trim()}规则`);
+  }
   if (action === 'new-rule') { const config = blankConfig(); ruleConfigs.push(config); openChannelRule(config.id, true); }
   if (action === 'edit-rule') openChannelRule(id, false);
+  if (action === 'copy-rule') { const source = ruleConfigs.find((rule) => rule.id === id); if (source) { const copy = JSON.parse(JSON.stringify(source)); copy.id = `r-${Date.now()}`; copy.channel = `${source.channel}-副本`; copy.updatedAt = '未保存'; copy.operator = '当前用户'; ruleConfigs.push(copy); renderRows(); showToast('规则已复制'); } }
+  if (action === 'delete-rule') { const index = ruleConfigs.findIndex((rule) => rule.id === id); if (index >= 0) { ruleConfigs.splice(index, 1); renderRows(); showToast('规则已删除'); } }
   if (action === 'close-common-rules') closeChannelRule();
   if (action === 'close-common-nodes') closeCommonNodes();
   if (action === 'new-common-node') newCommonNode();

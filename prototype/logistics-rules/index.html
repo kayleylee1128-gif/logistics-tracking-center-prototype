@@ -3,46 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>物流规则</title>
+  <title>物流轨迹规则</title>
   <link rel="stylesheet" href="./tokens.css" />
-  <link rel="stylesheet" href="styles.css?v=tracking-value-rules-v6" />
+  <link rel="stylesheet" href="styles.css?v=tracking-value-rules-v7" />
 </head>
 <body>
   <div class="c-shell" data-collapsed="false">
     <aside class="c-shell__sider" aria-label="主导航">
-      <div class="c-shell__brand"><span class="c-shell__brand-logo">E</span><span class="c-shell__brand-text">跨境电商 ERP</span></div>
+      <div class="c-shell__brand"><span class="c-shell__brand-logo">▰</span><span class="c-shell__brand-text">物流管理系统</span></div>
       <ul class="c-shell__menu" role="menu">
-        <li class="c-shell__menu-group">订单履约</li>
-        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▣</span><span>订单列表</span></li>
-        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">⌁</span><span>物流轨迹</span></li>
-        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▤</span><span>包裹列表</span></li>
-        <li class="c-shell__menu-group">物流配置</li>
-        <li class="c-shell__menu-item c-shell__menu-item--active" role="menuitem"><span class="c-shell__menu-icon">⚙</span><span>物流规则</span></li>
-        <li class="c-shell__menu-group">售后管理</li>
-        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">↩</span><span>退件处理</span></li>
-        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">¥</span><span>退款任务</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">⌂</span><span>首页</span></li>
+        <li class="c-shell__menu-item c-shell__menu-item--active" role="menuitem"><span class="c-shell__menu-icon">▣</span><span>物流轨迹</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▦</span><span>头程轨迹</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▤</span><span>物流渠道管理</span><span class="c-shell__menu-arrow">⌄</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▣</span><span>报价管理</span><span class="c-shell__menu-arrow">⌄</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▤</span><span>运费试算</span></li>
+        <li class="c-shell__menu-group">基础配置</li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">◉</span><span>费用类型设置</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">♟</span><span>海外仓开发者账户</span></li>
+        <li class="c-shell__menu-item c-shell__menu-item--active-sub" role="menuitem"><span class="c-shell__menu-icon">⌁</span><span>物流轨迹规则</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">▣</span><span>物流时间配置</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">◆</span><span>仓库管理</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">≣</span><span>物流轨迹时效</span></li>
+        <li class="c-shell__menu-item" role="menuitem"><span class="c-shell__menu-icon">≣</span><span>物流属性</span></li>
       </ul>
     </aside>
 
     <header class="c-shell__header">
       <button class="c-shell__collapse-btn" type="button" title="折叠侧栏" data-action="collapse" aria-label="折叠侧栏">≡</button>
-      <div class="c-shell__header-search"><span class="c-shell__header-search-icon">⌕</span><input class="input" placeholder="搜索菜单、订单号、SKU" aria-label="全局搜索" /></div>
-      <div class="c-shell__header-actions"><button class="c-shell__icon-btn" type="button" title="帮助" aria-label="帮助">?</button><button class="c-shell__icon-btn" type="button" title="通知" aria-label="通知">♢</button><div class="c-shell__avatar">F</div></div>
+      <div class="legacy-top-tabs"><span>首页</span><strong>物流轨迹规则 <b>×</b></strong></div>
+      <div class="c-shell__header-actions"><button class="c-shell__icon-btn" type="button" title="最近" aria-label="最近">◷</button><button class="c-shell__icon-btn" type="button" title="下载" aria-label="下载">⇩</button><button class="c-shell__icon-btn" type="button" title="搜索" aria-label="搜索">⌕</button><button class="c-shell__icon-btn" type="button" title="全屏" aria-label="全屏">⛶</button><div class="c-shell__avatar">F</div><span class="legacy-user">欢迎您, 李静</span></div>
     </header>
 
-    <nav class="c-shell__crumb" aria-label="面包屑"><a href="#">工作台</a><span class="c-shell__crumb-sep">/</span><a href="#">物流管理</a><span class="c-shell__crumb-sep">/</span><span class="c-shell__crumb-current">物流规则</span></nav>
+    <nav class="c-shell__crumb" aria-label="面包屑"><span>物流轨迹</span></nav>
 
     <main class="c-shell__content">
       <header class="c-page-header" id="pageHeader" data-annotation-target="pageHeader">
-        <div class="c-page-header__left"><h1 class="c-page-header__title">物流规则</h1><p class="c-page-header__desc">维护物流商轨迹取值与预警规则，保存后影响后续轨迹识别。</p></div>
-        <div class="c-page-header__actions"><span class="sync-status">最后更新：2026-07-22 10:18</span><button class="annotation-toggle" type="button" data-action="toggle-annotations">关闭标注</button><button class="btn" type="button" id="commonNodeEntry" data-annotation-target="commonNodeEntry" data-action="open-common-nodes">通用节点配置</button><button class="btn btn--solid btn--color-primary" id="channelRuleEntry" data-annotation-target="channelRuleEntry" data-action="new-rule">新增渠道规则</button></div>
+        <div class="c-page-header__left"><h1 class="c-page-header__title">物流轨迹规则</h1><p class="c-page-header__desc">配置不同物流渠道的轨迹取值规则。</p></div>
+        <div class="c-page-header__actions"><span class="sync-status">最后更新：2026-08-08 10:54:06</span><button class="annotation-toggle" type="button" data-action="toggle-annotations">关闭标注</button><button class="btn" type="button" id="commonNodeEntry" data-annotation-target="commonNodeEntry" data-action="open-common-nodes">通用节点配置</button></div>
       </header>
-
-      <section class="rule-architecture-note" aria-label="规则分层说明">
-        <div class="rule-architecture-note__icon">↗</div>
-        <div class="rule-architecture-note__copy"><strong>规则分层</strong><span>先维护业务统一口径，再按承运商渠道适配原始轨迹</span></div>
-        <div class="rule-architecture-note__flow"><span class="architecture-chip architecture-chip--standard">通用节点</span><span class="architecture-arrow">→</span><span class="architecture-chip architecture-chip--channel">渠道规则</span><span class="architecture-arrow">→</span><span class="architecture-chip architecture-chip--result">轨迹中心 / 异常报表</span></div>
-      </section>
 
       <section class="c-filter surface-panel" id="ruleFilter" data-annotation-target="ruleFilter" data-component="QueryFilterBar">
         <div class="c-filter__row">
@@ -54,10 +53,12 @@
         </div>
       </section>
 
+      <nav class="legacy-rule-tabs" aria-label="物流轨迹类型"><button type="button" class="c-tabs__tab legacy-rule-tab is-active" data-action="switch-legacy-tab">头程</button><button type="button" class="c-tabs__tab legacy-rule-tab" data-action="switch-legacy-tab">小包</button></nav>
+
       <section class="surface-panel c-table-panel" id="ruleTable" data-annotation-target="ruleTable" data-component="DataTablePanel">
-        <div class="table-toolbar"><div class="table-toolbar__left"><strong>规则列表</strong><span class="text-tertiary" id="resultNote">共 2 条规则</span></div><div class="table-toolbar__right"><button class="btn btn--sm" data-action="refresh">刷新</button></div></div>
+        <div class="table-toolbar"><div class="table-toolbar__left"><button class="btn btn--solid btn--color-primary" id="channelRuleEntry" data-annotation-target="channelRuleEntry" data-action="new-rule">添加规则</button><button class="btn" type="button">批量编辑</button></div><div class="table-toolbar__right"><span class="text-tertiary" id="resultNote">共 2 条规则</span><button class="btn btn--sm" data-action="refresh">刷新</button></div></div>
         <div class="table-scroll">
-          <table class="c-table" aria-label="物流规则列表"><thead><tr><th>物流商</th><th>物流渠道</th><th>映射单号</th><th>查询状态</th><th>上网取值</th><th>交航取值</th><th>到达目的国取值</th><th>签收取值</th><th>最近更新</th><th>操作</th></tr></thead><tbody id="ruleRows"></tbody></table>
+          <table class="c-table legacy-rule-table" aria-label="物流规则列表"><thead><tr><th class="selection-col"></th><th>物流商</th><th>物流渠道</th><th>上网取值规则</th><th>交航取值规则</th><th>到达目的国取值规则</th><th>签收取值设置</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="ruleRows"></tbody></table>
         </div>
         <div class="table-footer" id="ruleFooter" data-annotation-target="ruleFooter"><span>规则仅影响后续同步的轨迹，不回溯历史结果</span><div class="pagination"><span class="page-btn is-current">1</span></div></div>
       </section>
@@ -115,6 +116,6 @@
     <nav class="annotation-filters" id="annotationFilters"></nav>
     <div class="annotation-list" id="annotationList"></div>
   </aside>
-  <script src="script.js?v=tracking-value-rules-v5"></script>
+  <script src="script.js?v=tracking-value-rules-v6"></script>
 </body>
 </html>
