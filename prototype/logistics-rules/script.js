@@ -133,8 +133,8 @@ const annotations = [
   { id: 4, type: '规则', title: '渠道规则配置', target: 'ruleTable', description: '渠道维度直接配置完整关键词，未配置关键词的节点不参与识别；数据清洗后统一映射到标准节点编码。' },
   { id: 5, type: '规则', title: '取值与预警', target: 'ruleFooter', description: '上网、交航、到达目的国、签收分别配置轨迹判断方式；预警天数按当前时间与交运时间的差值判断，历史结果不回溯。' },
   { id: 6, type: '页面', title: '退回取值设置', target: 'returnConfigPanel', description: '退回节点按退回中、退回签收两个二次节点直接配置渠道关键词；包裹异常在独立页签配置标签。' },
-  { id: 7, type: '规则', title: '包裹异常标签', target: 'exceptionConfigPanel', description: '包裹异常下仅维护派送失败和丢件标签关键词；查不到轨迹、轨迹同步失败由开发侧系统状态处理。' },
-  { id: 8, type: '待确认', title: '异常标签触发条件', target: 'exceptionConfigPanel', description: '待确认：开发侧查不到轨迹、轨迹同步失败状态的判定阈值和标签写入时机。' }
+  { id: 7, type: '规则', title: '包裹异常标签', target: 'exceptionConfigPanel', description: '包裹异常下仅维护派送失败和丢件标签关键词；系统级异常状态由开发侧处理。' },
+  { id: 8, type: '待确认', title: '异常标签触发条件', target: 'exceptionConfigPanel', description: '待确认：开发侧系统异常状态的判定阈值和标签写入时机。' }
 ];
 
 const annotationTypes = ['全部', '页面', '字段', '交互', '规则', '待确认'];
