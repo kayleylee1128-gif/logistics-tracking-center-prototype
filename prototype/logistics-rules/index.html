@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>物流轨迹规则</title>
   <link rel="stylesheet" href="./tokens.css" />
-  <link rel="stylesheet" href="styles.css?v=tracking-value-rules-v8" />
+  <link rel="stylesheet" href="styles.css?v=tracking-value-rules-v9" />
 </head>
 <body>
   <div class="c-shell" data-collapsed="false">
@@ -84,7 +84,7 @@
 
   <div class="c-modal-mask common-node-mask" data-open="false" data-action="close-common-nodes"></div>
   <section class="c-modal common-node-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="commonNodeTitle">
-    <header class="c-modal__head"><div><h2 class="c-modal__title" id="commonNodeTitle">通用节点配置</h2><p class="c-modal__subtitle">维护系统统一的标准业务节点，渠道规则通过映射引用。</p></div><button class="c-modal__close" type="button" data-action="close-common-nodes" aria-label="关闭">×</button></header>
+    <header class="c-modal__head"><div><h2 class="c-modal__title" id="commonNodeTitle">通用节点配置</h2><p class="c-modal__subtitle">标准节点及关键词</p></div><button class="c-modal__close" type="button" data-action="close-common-nodes" aria-label="关闭">×</button></header>
     <div class="common-node-layout">
       <aside class="common-node-list"><div class="common-node-list__head"><div><strong>标准节点</strong><span class="common-node-list__count" id="commonNodeCount">6 个</span></div><button class="btn btn--text btn--color-primary btn--sm" type="button" data-action="new-common-node">+ 新增节点</button></div><div id="commonNodeList"></div></aside>
       <form class="common-node-form" id="commonNodeForm">
@@ -98,8 +98,7 @@
           <label class="form-field"><span>是否终态</span><input class="input" name="terminal" required maxlength="10" placeholder="是 / 否" /></label>
           <label class="form-field"><span>状态</span><input class="input" name="enabled" required maxlength="10" placeholder="启用 / 停用" /></label>
         </div>
-        <section class="common-node-keywords"><div class="common-node-keywords__title"><div><strong>节点默认识别规则</strong><span>通用配置先定义基础关键词，渠道规则只补充承运商差异</span></div><span class="tag tag--processing">全渠道默认</span></div><div id="commonNodeKeywordConfig"></div></section>
-        <div class="common-node-note">渠道规则默认继承这里的通用关键词；若某个渠道文案不同，在渠道规则中添加补充词或排除词，不重复录入整套规则。</div>
+        <section class="common-node-keywords"><div class="common-node-keywords__title"><div><strong>节点默认识别规则</strong></div><span class="tag tag--processing">全渠道默认</span></div><div id="commonNodeKeywordConfig"></div></section>
         <footer class="c-modal__foot"><span class="modal-readonly" id="commonNodeUpdatedAt">最近更新：—</span><div class="c-modal__foot-actions"><button class="btn" type="button" data-action="close-common-nodes">取消</button><button class="btn btn--solid btn--color-primary" type="submit">保存节点</button></div></footer>
       </form>
     </div>
@@ -116,6 +115,6 @@
     <nav class="annotation-filters" id="annotationFilters"></nav>
     <div class="annotation-list" id="annotationList"></div>
   </aside>
-  <script src="script.js?v=tracking-value-rules-v7"></script>
+  <script src="script.js?v=tracking-value-rules-v8"></script>
 </body>
 </html>

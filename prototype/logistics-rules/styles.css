@@ -116,12 +116,19 @@ a { color: inherit; }
 .special-effective { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding: 9px 12px; border-radius: 4px; background: #f0fdf4; color: #166534; font-size: 12px; }
 .special-effective i { color: #86efac; font-style: normal; }
 .special-effective small { flex-basis: 100%; color: #4d7c0f; }
+.special-fallback-state { margin-top: 14px; padding: 11px 12px; border: 1px solid #d9e2ec; border-radius: 4px; background: #f8fafc; color: var(--color-text-secondary); font-size: 13px; }
 .special-config-tip { margin-top: 14px; padding: 11px 12px; border: 1px solid #dbeafe; border-radius: 4px; background: #f8fbff; color: var(--color-text-secondary); font-size: 12px; line-height: 1.6; }
 .special-config-tip strong { color: var(--color-primary-7); }
 .exception-rule-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 4px; background: #fafafa; }
 .exception-rule-summary div { display: grid; gap: 4px; }
 .exception-rule-summary strong { color: var(--color-text); font-size: 13px; }
 .exception-rule-summary span { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.5; }
+.exception-common-reference { margin: 14px 0; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #f8fafc; }
+.exception-common-reference > span { display: block; margin-bottom: 8px; color: var(--color-text-secondary); font-size: 13px; }
+.exception-common-row { display: flex; align-items: center; gap: 12px; min-height: 34px; border-top: 1px solid #e5e7eb; }
+.exception-common-row strong { flex: 0 0 100px; color: var(--color-text); font-size: 13px; }
+.exception-common-row .keyword-source-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.exception-add-tag { margin: 0 0 14px 118px; color: var(--color-primary-6); border-color: #c8e1f7; }
 .exception-tag-card__head .inherit-switch { margin-top: 2px; }
 .exception-tag-meta { display: flex; align-items: center; gap: 16px; margin-top: 12px; padding-bottom: 10px; border-bottom: 1px solid #f0f2f5; }
 .exception-tag-meta label { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-secondary); }
