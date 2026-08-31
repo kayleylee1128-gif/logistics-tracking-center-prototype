@@ -82,7 +82,7 @@ a { color: inherit; }
 .config-radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 .config-radio input { width: 17px; height: 17px; accent-color: var(--color-primary-6); }
 .config-number { width: 96px; text-align: center; }
-.keyword-rule-box { margin: 6px 0 18px 22px; padding: 14px 12px 12px; border: 4px solid #4b99f5; border-radius: 8px; }
+.keyword-rule-box { margin: 6px 0 18px 22px; padding: 14px 12px 12px; }
 .config-radio--description { color: #4b99f5; line-height: 1.5; }
 .keyword-input-row { display: flex; align-items: center; gap: 12px; margin: 16px 0 8px; padding-left: 28px; color: var(--color-text-secondary); }
 .keyword-input-row > span { width: 86px; text-align: right; white-space: nowrap; }
@@ -96,7 +96,7 @@ a { color: inherit; }
 
 @media (max-width: 800px) { .c-rule-config-modal { width: calc(100vw - 16px); }.rule-config-form { padding: 20px 16px 0; }.rule-config-basic { grid-template-columns: 1fr; gap: 16px; }.rule-config-field--switch { grid-column: auto; }.rule-config-tabs { overflow-x: auto; }.rule-config-tab { flex: 0 0 auto; padding: 0 12px; }.keyword-rule-box { margin-left: 0; }.keyword-input-row { padding-left: 0; }.config-keyword-list { padding-left: 0; }.warning-rule-row { flex-wrap: wrap; gap: 8px; }.warning-rule-row > span:first-child { width: auto; text-align: left; }.rule-config-form > .c-modal__foot { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; } }
 
-/* 退回与包裹异常：在原有四个轨迹取值页签后补充二次节点和异常标签配置。 */
+/* 退回与包裹异常：在轨迹取值页签后补充二次节点和异常标签配置。 */
 .special-config-panel { margin-top: 18px; }
 .special-config-panel__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .special-config-panel__head .config-section__title { margin-bottom: 6px; }

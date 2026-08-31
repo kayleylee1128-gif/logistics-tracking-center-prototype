@@ -1,4 +1,5 @@
 const phaseLabels = {
+  collected: '揽收',
   online: '上网',
   handover: '交航',
   arrived: '到达目的国',
@@ -50,6 +51,7 @@ const ruleConfigs = [
     id: 'r1', carrier: '中塔物流', channel: 'ZT-CN-EMS', mappingNo: '物流单号', queryEnabled: true,
     updatedAt: '2026-07-22 10:18', operator: 'Fiona',
     phases: {
+      collected: { ...createPhaseConfig('keyword'), includeKeywords: ['已揽收'] },
       online: { ...createPhaseConfig('keyword'), includeKeywords: ['已上网', '到达分拣中心'], excludeKeywords: ['退回'] },
       handover: { ...createPhaseConfig('keyword'), includeKeywords: ['已交航', '航班起飞'] },
       arrived: { ...createPhaseConfig('keyword'), includeKeywords: ['到达目的国', '进口处理中心'] },
@@ -60,6 +62,7 @@ const ruleConfigs = [
     id: 'r2', carrier: '安捷利美', channel: 'AJL-DHL-E', mappingNo: '跟踪号', queryEnabled: true,
     updatedAt: '2026-07-21 16:42', operator: 'Fiona',
     phases: {
+      collected: { ...createPhaseConfig('keyword'), includeKeywords: ['已收件'] },
       online: { ...createPhaseConfig('count'), selectedCount: 1 },
       handover: { ...createPhaseConfig('keyword'), includeKeywords: ['航班已起飞'] },
       arrived: { ...createPhaseConfig('keyword'), includeKeywords: ['已到达目的国'] },
@@ -78,6 +81,8 @@ const commonNodes = [
 ];
 
 function ensureSpecialConfig(config) {
+  config.phases = config.phases || {};
+  config.phases.collected = config.phases.collected || createPhaseConfig();
   config.returnNodes = config.returnNodes || {};
   const seed = createSpecialConfig();
   returnNodeIds.forEach((id) => {
@@ -106,7 +111,7 @@ const keywordInput = (value) => [...new Set(String(value || '').split(/[，,\n]/
 function blankConfig() {
   return {
     id: `r-${Date.now()}`, carrier: '请选择', channel: '请选择', mappingNo: '请选择', queryEnabled: true,
-    updatedAt: '未保存', operator: '当前用户', phases: { online: createPhaseConfig(), handover: createPhaseConfig(), arrived: createPhaseConfig(), signed: createPhaseConfig() },
+    updatedAt: '未保存', operator: '当前用户', phases: { collected: createPhaseConfig(), online: createPhaseConfig(), handover: createPhaseConfig(), arrived: createPhaseConfig(), signed: createPhaseConfig() },
     ...createSpecialConfig()
   };
 }
@@ -131,10 +136,11 @@ const annotations = [
   { id: 2, type: '字段', title: '渠道筛选条件', target: 'ruleFilter', description: '按物流商、物流渠道和查询状态筛选渠道规则；默认全部，数据来源为规则配置列表，点击查询后刷新结果。' },
   { id: 3, type: '交互', title: '添加规则', target: 'channelRuleEntry', description: '点击打开渠道规则表单，保留原有物流商、物流渠道、映射单号和轨迹取值设置；必填项缺失时阻断保存。' },
   { id: 4, type: '规则', title: '渠道规则配置', target: 'ruleTable', description: '渠道维度直接配置完整关键词，未配置关键词的节点不参与识别；数据清洗后统一映射到标准节点编码。' },
-  { id: 5, type: '规则', title: '取值与预警', target: 'ruleFooter', description: '上网、交航、到达目的国、签收分别配置轨迹判断方式；预警天数按当前时间与交运时间的差值判断，历史结果不回溯。' },
-  { id: 6, type: '页面', title: '退回取值设置', target: 'returnConfigPanel', description: '退回节点按退回中、退回签收两个二次节点直接配置渠道关键词；包裹异常在独立页签配置标签。' },
-  { id: 7, type: '规则', title: '包裹异常标签', target: 'exceptionConfigPanel', description: '包裹异常下仅维护派送失败和丢件标签关键词；系统级异常状态由开发侧处理。' },
-  { id: 8, type: '待确认', title: '异常标签触发条件', target: 'exceptionConfigPanel', description: '待确认：开发侧系统异常状态的判定阈值和标签写入时机。' }
+  { id: 5, type: '规则', title: '取值与预警', target: 'ruleFooter', description: '揽收、上网、交航、到达目的国、签收分别配置轨迹判断方式；预警天数按当前时间与交运时间的差值判断，历史结果不回溯。' },
+  { id: 6, type: '页面', title: '揽收取值设置', target: 'trackConfigPanel', description: '揽收作为独立物流节点配置，沿用上网取值设置的轨迹数量、关键词和排除关键词规则；入口位于编辑规则弹窗页签。' },
+  { id: 7, type: '页面', title: '退回取值设置', target: 'returnConfigPanel', description: '退回节点按退回中、退回签收两个二次节点直接配置渠道关键词；包裹异常在独立页签配置标签。' },
+  { id: 8, type: '规则', title: '包裹异常标签', target: 'exceptionConfigPanel', description: '包裹异常下仅维护派送失败和丢件标签关键词；系统级异常状态由开发侧处理。' },
+  { id: 9, type: '待确认', title: '异常标签触发条件', target: 'exceptionConfigPanel', description: '待确认：开发侧系统异常状态的判定阈值和标签写入时机。' }
 ];
 
 const annotationTypes = ['全部', '页面', '字段', '交互', '规则', '待确认'];
@@ -250,19 +256,22 @@ function renderConfigPanel() {
   $$('.rule-config-tab').forEach((tab) => tab.classList.toggle('is-active', tab.dataset.tab === activeConfigTab));
   if (activeConfigTab === 'return') {
     $('#ruleConfigPanel').innerHTML = renderReturnConfig(config);
+    updateAnnotationMarkers();
     return;
   }
   if (activeConfigTab === 'exception') {
     $('#ruleConfigPanel').innerHTML = renderExceptionConfig(config);
+    updateAnnotationMarkers();
     return;
   }
-  $('#ruleConfigPanel').innerHTML = `<section class="config-section"><div class="config-section__title">轨迹取值规则</div>
+  $('#ruleConfigPanel').innerHTML = `<section class="config-section" id="trackConfigPanel" data-annotation-target="trackConfigPanel"><div class="config-section__title">轨迹取值规则</div>
     <div class="config-count-row"><label class="config-radio"><input type="radio" name="trackMode" value="count" ${setting.mode === 'count' ? 'checked' : ''} data-action="change-track-mode" /> <span>选定</span></label><input class="input config-number" type="number" min="0" name="selectedCount" value="${setting.selectedCount || 0}" /> <span>条轨迹，判断为${label}轨迹</span></div>
     <div class="keyword-rule-box"><label class="config-radio config-radio--description"><input type="radio" name="trackMode" value="keyword" ${setting.mode === 'keyword' ? 'checked' : ''} data-action="change-track-mode" /><span>轨迹关键词（第一次抓到当前填写的关键词的某条轨迹，即为该条轨迹判断为${label}）</span></label>
       <div class="keyword-input-row"><span>轨迹关键词：</span><input class="input" id="includeKeywordInput" placeholder="请输入关键词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-keyword" data-kind="include">添加</button></div><div class="config-keyword-list">${renderTags(setting.includeKeywords, 'include')}</div>
       <div class="keyword-input-row"><span>排除关键词：</span><input class="input" id="excludeKeywordInput" placeholder="请输入排除关键词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-keyword" data-kind="exclude">添加</button></div><div class="config-keyword-list">${renderTags(setting.excludeKeywords, 'exclude')}</div>
     </div></section>
     <section class="config-section"><div class="config-section__title">预警取值规则</div>${['online', 'handover', 'arrived', 'signed'].map((phase) => `<div class="warning-rule-row"><span>已${phaseLabels[phase]}</span><input class="input config-number" type="number" min="0" data-warning="${phase}" value="${setting.warnings[phase] || 0}" /><span>天，提示未${phaseLabels[phase]}预警</span><small>（${phaseLabels[phase]}时效 = 当前时间 - 交运时间）</small></div>`).join('')}</section>`;
+  updateAnnotationMarkers();
 }
 
 function fillConfigForm() {
@@ -281,7 +290,7 @@ function fillConfigForm() {
 function openChannelRule(id = activeConfigId, isNew = false) {
   activeConfigId = id;
   configIsNew = isNew;
-  activeConfigTab = 'online';
+  activeConfigTab = 'collected';
   ensureSpecialConfig(currentConfig());
   fillConfigForm();
   $('.c-modal').dataset.open = 'true';
