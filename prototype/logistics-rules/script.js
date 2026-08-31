@@ -21,6 +21,33 @@ function createPhaseConfig(mode = 'keyword') {
   };
 }
 
+function createSpecialNodeRule(includeKeywords = [], excludeKeywords = []) {
+  return { inheritCommon: true, includeKeywords: [...includeKeywords], excludeKeywords: [...excludeKeywords] };
+}
+
+const returnNodeIds = ['returning', 'return-received', 'package-exception'];
+const exceptionTagSeed = [
+  { id: 'no-tracking', name: '查不到轨迹', priority: 1, source: '关键词 + 系统条件', description: '建议同时结合抓取超时或连续无有效轨迹判断。', includeKeywords: ['查不到轨迹', 'tracking not found', 'no tracking'], excludeKeywords: [] },
+  { id: 'delivery-failed', name: '派送失败', priority: 2, source: '轨迹关键词', description: '命中派送失败、投递失败等承运商状态。', includeKeywords: ['派送失败', 'delivery failed', 'attempted delivery'], excludeKeywords: ['已签收', 'delivered'] },
+  { id: 'package-lost', name: '丢件', priority: 3, source: '轨迹关键词', description: '命中承运商确认丢失或无法找回的状态。', includeKeywords: ['丢件', 'lost', 'missing package'], excludeKeywords: ['找到包裹', 'located'] },
+  { id: 'tracking-sync-failed', name: '轨迹同步失败', priority: 4, source: '关键词 + 系统条件', description: '建议结合同步任务失败次数或接口错误码判断。', includeKeywords: ['轨迹同步失败', 'sync failed', 'tracking update failed'], excludeKeywords: [] }
+];
+
+function createExceptionTags() {
+  return exceptionTagSeed.map((tag) => ({ ...tag, enabled: true, includeKeywords: [...tag.includeKeywords], excludeKeywords: [...tag.excludeKeywords] }));
+}
+
+function createSpecialConfig() {
+  return {
+    returnNodes: {
+      returning: createSpecialNodeRule(['退回', 'returned to sender', 'return to sender']),
+      'return-received': createSpecialNodeRule(['退回签收', 'return received', 'returned']),
+      'package-exception': createSpecialNodeRule(['包裹异常', 'package exception', 'shipment exception'])
+    },
+    exceptionTags: createExceptionTags()
+  };
+}
+
 const ruleConfigs = [
   {
     id: 'r1', carrier: '中塔物流', channel: 'ZT-CN-EMS', mappingNo: '物流单号', queryEnabled: true,
@@ -47,6 +74,7 @@ const ruleConfigs = [
 const commonNodes = [
   { id: 'returning', name: '退回中', code: 'RETURNING', direction: '正向 / 逆向', phase: '退回', description: '包裹正在退回途中，尚未完成退件仓签收。', terminal: '否', enabled: '启用', updatedAt: '2026-07-22 10:18', operator: 'Fiona' },
   { id: 'return-received', name: '退回签收', code: 'RETURN_RECEIVED', direction: '逆向', phase: '退回', description: '退件仓已收到退回包裹，可进入后续入库或质检流程。', terminal: '是', enabled: '启用', updatedAt: '2026-07-22 10:18', operator: 'Fiona' },
+  { id: 'package-exception', name: '包裹异常', code: 'PACKAGE_EXCEPTION', direction: '正向 / 逆向', phase: '异常', description: '包裹发生需要运营关注的异常，具体异常类型通过标签细分。', terminal: '否', enabled: '启用', updatedAt: '2026-08-08 10:54', operator: 'Fiona' },
   { id: 'package-lost', name: '丢件', code: 'PACKAGE_LOST', direction: '正向 / 逆向', phase: '异常', description: '承运商确认包裹丢失或无法找回。', terminal: '是', enabled: '启用', updatedAt: '2026-07-21 16:42', operator: 'Fiona' },
   { id: 'package-damaged', name: '破损', code: 'PACKAGE_DAMAGED', direction: '正向 / 逆向', phase: '异常', description: '承运商或仓库确认包裹外包装或商品破损。', terminal: '是', enabled: '启用', updatedAt: '2026-07-21 16:42', operator: 'Fiona' },
   { id: 'delivery-failed', name: '派送失败', code: 'DELIVERY_FAILED', direction: '正向', phase: '异常', description: '末端派送未成功，需重新派送或人工处理。', terminal: '否', enabled: '启用', updatedAt: '2026-07-21 16:42', operator: 'Fiona' }
@@ -55,6 +83,7 @@ const commonNodes = [
 const commonKeywordSeed = {
   returning: { includeKeywords: ['退回', 'returned to sender', 'return to sender'], excludeKeywords: ['已签收', 'delivered'] },
   'return-received': { includeKeywords: ['退回签收', 'return received', 'returned'], excludeKeywords: [] },
+  'package-exception': { includeKeywords: ['包裹异常', 'package exception', 'shipment exception'], excludeKeywords: [] },
   'package-lost': { includeKeywords: ['丢件', 'lost', 'missing package', '无法投递'], excludeKeywords: ['找到包裹', 'located'] },
   'package-damaged': { includeKeywords: ['破损', 'damaged', '损坏', 'broken'], excludeKeywords: [] },
   'delivery-failed': { includeKeywords: ['派送失败', 'delivery failed', 'attempted delivery', 'delivery exception'], excludeKeywords: ['已签收', 'delivered'] }
@@ -66,6 +95,16 @@ commonNodes.forEach((node) => {
   node.includeKeywords = node.includeKeywords || [...seed.includeKeywords];
   node.excludeKeywords = node.excludeKeywords || [...seed.excludeKeywords];
 });
+
+function ensureSpecialConfig(config) {
+  config.returnNodes = config.returnNodes || {};
+  const seed = createSpecialConfig();
+  returnNodeIds.forEach((id) => {
+    config.returnNodes[id] = config.returnNodes[id] || seed.returnNodes[id];
+  });
+  config.exceptionTags = config.exceptionTags || createExceptionTags();
+  return config;
+}
 
 function ensureNodeRules(config) {
   config.nodeRules = config.nodeRules || {};
@@ -93,7 +132,8 @@ const keywordInput = (value) => [...new Set(String(value || '').split(/[，,\n]/
 function blankConfig() {
   return {
     id: `r-${Date.now()}`, carrier: '请选择', channel: '请选择', mappingNo: '请选择', queryEnabled: true,
-    updatedAt: '未保存', operator: '当前用户', phases: { online: createPhaseConfig(), handover: createPhaseConfig(), arrived: createPhaseConfig(), signed: createPhaseConfig() }
+    updatedAt: '未保存', operator: '当前用户', phases: { online: createPhaseConfig(), handover: createPhaseConfig(), arrived: createPhaseConfig(), signed: createPhaseConfig() },
+    ...createSpecialConfig()
   };
 }
 
@@ -119,7 +159,9 @@ const annotations = [
   { id: 4, type: '交互', title: '添加规则', target: 'channelRuleEntry', description: '点击打开渠道规则表单，保留原有物流商、物流渠道、映射单号和轨迹取值设置，并在编辑区域选择对应通用节点；必填项缺失时阻断保存。' },
   { id: 5, type: '规则', title: '渠道规则映射', target: 'ruleTable', description: '渠道维度继承通用关键词，只维护承运商差异化的补充词和排除词；最终映射到统一节点，避免每个渠道重复维护整套规则。' },
   { id: 6, type: '规则', title: '取值与预警', target: 'ruleFooter', description: '上网、交航、到达目的国、签收分别配置轨迹判断方式；预警天数按当前时间与交运时间的差值判断，历史结果不回溯。' },
-  { id: 7, type: '待确认', title: '节点权限与审批', target: 'commonNodeEntry', description: '待确认：通用节点新增、停用、编码变更是否需要管理员权限和审批。影响节点字典稳定性、审计和历史报表口径。' }
+  { id: 7, type: '页面', title: '退回取值设置', target: 'returnConfigPanel', description: '退回节点按退回中、退回签收、包裹异常三个二次节点识别；默认继承通用节点关键词，渠道仅补充承运商差异词。' },
+  { id: 8, type: '规则', title: '包裹异常标签', target: 'exceptionConfigPanel', description: '包裹异常为统一二级节点，命中标签关键词后写入查不到轨迹、派送失败、丢件或轨迹同步失败标签；同一条轨迹多标签命中时按优先级取最高项，包裹历史标签不覆盖。' },
+  { id: 9, type: '待确认', title: '异常标签触发条件', target: 'exceptionConfigPanel', description: '待确认：查不到轨迹、轨迹同步失败是否由系统超时/任务失败条件与关键词共同触发，以及阈值和标签是否允许多选。影响异常召回率和误报率。' }
 ];
 
 const annotationTypes = ['全部', '页面', '字段', '交互', '规则', '待确认'];
@@ -221,13 +263,52 @@ function renderChannelNodeRule(config) {
   </section>`;
 }
 
+function renderSpecialTags(items, scope, nodeId = '') {
+  return items.map((item, index) => `<span class="tag tag--default config-keyword-tag">${item}<button type="button" data-action="remove-keyword" data-kind="${scope}" data-node-id="${nodeId}" data-index="${index}" aria-label="删除${item}">×</button></span>`).join('');
+}
+
+function renderReturnConfig(config) {
+  ensureSpecialConfig(config);
+  const nodeCards = returnNodeIds.map((nodeId) => {
+    const node = commonNodes.find((item) => item.id === nodeId);
+    const rule = config.returnNodes[nodeId];
+    const globalInclude = node?.includeKeywords || [];
+    const globalExclude = node?.excludeKeywords || [];
+    const effectiveInclude = [...new Set([...(rule.inheritCommon ? globalInclude : []), ...rule.includeKeywords])];
+    const effectiveExclude = [...new Set([...(rule.inheritCommon ? globalExclude : []), ...rule.excludeKeywords])];
+    return `<article class="special-node-card"><div class="special-node-card__head"><div><strong>${node?.name || nodeId}</strong><span class="tag tag--processing">二次节点</span><p>${node?.description || '按通用节点口径识别当前退回状态。'}</p></div><label class="inherit-switch"><input type="checkbox" data-action="toggle-special-inherit" data-node-id="${nodeId}" ${rule.inheritCommon ? 'checked' : ''} /><span></span><b>继承通用规则</b></label></div>
+      <div class="special-source-row"><div><span>通用默认关键词</span><div class="keyword-source-tags">${renderTags(globalInclude, 'readonly')}</div></div><div><span>通用排除关键词</span><div class="keyword-source-tags">${renderTags(globalExclude, 'readonly')}</div></div></div>
+      <div class="special-keyword-row"><span>渠道补充关键词</span><input class="input" id="returnInclude-${nodeId}" placeholder="例如：承运商专属退回状态" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-special-keyword" data-scope="return" data-node-id="${nodeId}" data-kind="include">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(rule.includeKeywords, 'return-include', nodeId)}</div>
+      <div class="special-keyword-row"><span>渠道排除关键词</span><input class="input" id="returnExclude-${nodeId}" placeholder="例如：仅表示已签收的状态" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-special-keyword" data-scope="return" data-node-id="${nodeId}" data-kind="exclude">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(rule.excludeKeywords, 'return-exclude', nodeId)}</div>
+      <div class="special-effective"><span>最终生效</span><strong>${effectiveInclude.length} 个命中词</strong><i>+</i><strong>${effectiveExclude.length} 个排除词</strong><small>命中后将统一映射为“${node?.name || nodeId}”</small></div></article>`;
+  }).join('');
+  return `<section class="special-config-panel" id="returnConfigPanel" data-annotation-target="returnConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">退回二次节点关键词</div><p>退回取值设置用于识别正向物流进入退回后的具体状态，统一使用三个标准二次节点。</p></div><span class="tag tag--processing">通用默认 + 渠道补充</span></div>${nodeCards}<div class="special-config-tip"><strong>配置建议：</strong>通用节点配置维护跨渠道共用的基础词；只有承运商文案差异才在当前渠道补充或排除，避免批量复制整套关键词。</div></section>`;
+}
+
+function renderExceptionTags(items) {
+  return items.map((tag, index) => `<article class="exception-tag-card"><div class="exception-tag-card__head"><div><strong>${tag.name}</strong><span class="tag tag--warning">优先级 ${tag.priority}</span><p>${tag.description}</p></div><label class="inherit-switch"><input type="checkbox" data-action="toggle-exception-tag" data-index="${index}" ${tag.enabled ? 'checked' : ''} /><span></span><b>${tag.enabled ? '启用' : '停用'}</b></label></div><div class="exception-tag-meta"><span>触发来源：${tag.source}</span><label>优先级 <input class="input exception-priority-input" type="number" min="1" value="${tag.priority}" data-action="change-exception-priority" data-index="${index}" /></label><span>数字越小越优先</span></div><div class="special-keyword-row"><span>命中关键词</span><input class="input" id="exceptionInclude-${index}" placeholder="输入承运商异常状态词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-keyword" data-kind="include" data-index="${index}">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(tag.includeKeywords, 'exception-include', String(index))}</div><div class="special-keyword-row"><span>排除关键词</span><input class="input" id="exceptionExclude-${index}" placeholder="可选，避免已签收等误判" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-keyword" data-kind="exclude" data-index="${index}">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(tag.excludeKeywords, 'exception-exclude', String(index))}</div></article>`).join('');
+}
+
+function renderExceptionConfig(config) {
+  ensureSpecialConfig(config);
+  return `<section class="special-config-panel" id="exceptionConfigPanel" data-annotation-target="exceptionConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">包裹异常标签规则</div><p>包裹异常是统一二级节点，命中下方规则后写入对应标签；同一包裹可累计多个异常标签，不覆盖历史标签。</p></div><button class="btn btn--sm" type="button" data-action="add-exception-tag">+ 新增标签</button></div><div class="exception-rule-summary"><div><strong>标签写入</strong><span>命中后新增标签，不覆盖已有标签</span></div><div><strong>同轨迹多命中</strong><span>按优先级取最高项，避免一条状态重复打标</span></div><div><strong>无关键词命中</strong><span>保持当前节点状态，不自动生成异常标签</span></div></div>${renderExceptionTags(config.exceptionTags)}<div class="special-config-tip"><strong>行业建议：</strong>“查不到轨迹”和“轨迹同步失败”最好同时接入系统条件（抓取超时、连续无有效轨迹、同步任务失败次数或接口错误码），关键词仅作为承运商主动返回状态的补充。</div></section>`;
+}
+
 function renderConfigPanel() {
   const config = currentConfig();
   if (!config) return;
   const setting = config.phases[activeConfigTab];
   const label = phaseLabels[activeConfigTab];
   $$('.rule-config-tab').forEach((tab) => tab.classList.toggle('is-active', tab.dataset.tab === activeConfigTab));
-  $('#ruleConfigPanel').innerHTML = renderChannelNodeRule(config) + `<section class="config-section"><div class="config-section__title">轨迹取值规则</div>
+  if (activeConfigTab === 'return') {
+    $('#ruleConfigPanel').innerHTML = renderReturnConfig(config);
+    return;
+  }
+  if (activeConfigTab === 'exception') {
+    $('#ruleConfigPanel').innerHTML = renderExceptionConfig(config);
+    return;
+  }
+  $('#ruleConfigPanel').innerHTML = `<section class="config-section"><div class="config-section__title">轨迹取值规则</div>
     <div class="config-count-row"><label class="config-radio"><input type="radio" name="trackMode" value="count" ${setting.mode === 'count' ? 'checked' : ''} data-action="change-track-mode" /> <span>选定</span></label><input class="input config-number" type="number" min="0" name="selectedCount" value="${setting.selectedCount || 0}" /> <span>条轨迹，判断为${label}轨迹</span></div>
     <div class="keyword-rule-box"><label class="config-radio config-radio--description"><input type="radio" name="trackMode" value="keyword" ${setting.mode === 'keyword' ? 'checked' : ''} data-action="change-track-mode" /><span>轨迹关键词（第一次抓到当前填写的关键词的某条轨迹，即为该条轨迹判断为${label}）</span></label>
       <div class="keyword-input-row"><span>轨迹关键词：</span><input class="input" id="includeKeywordInput" placeholder="请输入关键词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-keyword" data-kind="include">添加</button></div><div class="config-keyword-list">${renderTags(setting.includeKeywords, 'include')}</div>
@@ -255,6 +336,7 @@ function openChannelRule(id = activeConfigId, isNew = false) {
   activeConfigTab = 'online';
   activeChannelNodeId = 'returning';
   ensureNodeRules(currentConfig());
+  ensureSpecialConfig(currentConfig());
   fillConfigForm();
   $('.c-modal').dataset.open = 'true';
   $('.c-modal-mask').dataset.open = 'true';
@@ -368,9 +450,12 @@ function saveCommonRule(event) {
   config.mappingNo = form.elements.mappingNo.value;
   config.queryEnabled = form.elements.queryEnabled.checked;
   const activePhase = config.phases[activeConfigTab];
-  activePhase.mode = form.elements.trackMode?.value || activePhase.mode;
-  activePhase.selectedCount = Number(form.elements.selectedCount?.value || 0);
-  $$('#ruleConfigPanel [data-warning]').forEach((input) => { activePhase.warnings[input.dataset.warning] = Number(input.value || 0); });
+  if (activePhase) {
+    activePhase.mode = form.elements.trackMode?.value || activePhase.mode;
+    activePhase.selectedCount = Number(form.elements.selectedCount?.value || 0);
+    $$('#ruleConfigPanel [data-warning]').forEach((input) => { activePhase.warnings[input.dataset.warning] = Number(input.value || 0); });
+  }
+  ensureSpecialConfig(config);
   config.updatedAt = new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
   config.operator = '当前用户';
   configIsNew = false;
@@ -441,10 +526,50 @@ document.addEventListener('click', (event) => {
     input.value = '';
     renderConfigPanel();
   }
+  if (action === 'add-special-keyword') {
+    const button = event.target.closest('[data-action="add-special-keyword"]');
+    const scope = button.dataset.scope;
+    const kind = button.dataset.kind;
+    const nodeId = button.dataset.nodeId;
+    const input = $(`#${scope === 'return' ? `${kind === 'include' ? 'returnInclude' : 'returnExclude'}-${nodeId}` : ''}`);
+    const value = input?.value.trim();
+    if (!value) return;
+    if (scope === 'return') currentConfig().returnNodes[nodeId][`${kind}Keywords`].push(value);
+    if (input) input.value = '';
+    renderConfigPanel();
+  }
+  if (action === 'add-exception-keyword') {
+    const button = event.target.closest('[data-action="add-exception-keyword"]');
+    const index = Number(button.dataset.index);
+    const kind = button.dataset.kind;
+    const input = $(`#exception${kind === 'include' ? 'Include' : 'Exclude'}-${index}`);
+    const value = input?.value.trim();
+    if (!value) return;
+    currentConfig().exceptionTags[index][`${kind}Keywords`].push(value);
+    input.value = '';
+    renderConfigPanel();
+  }
+  if (action === 'add-exception-tag') {
+    const config = ensureSpecialConfig(currentConfig());
+    const nextPriority = Math.max(...config.exceptionTags.map((tag) => Number(tag.priority) || 0), 0) + 1;
+    config.exceptionTags.push({ id: `custom-${Date.now()}`, name: '新异常标签', priority: nextPriority, source: '轨迹关键词', description: '请在产品配置中补充该标签的业务定义。', enabled: true, includeKeywords: [], excludeKeywords: [] });
+    renderConfigPanel();
+    showToast('已新增异常标签，请补充关键词');
+  }
   if (action === 'remove-keyword') {
     const target = event.target.closest('[data-action="remove-keyword"]');
     const kind = target.dataset.kind;
-    if (kind.startsWith('common-')) {
+    if (kind.startsWith('return-')) {
+      const nodeId = target.dataset.nodeId;
+      const key = kind === 'return-include' ? 'includeKeywords' : 'excludeKeywords';
+      currentConfig().returnNodes[nodeId][key].splice(Number(target.dataset.index), 1);
+      renderConfigPanel();
+    } else if (kind.startsWith('exception-')) {
+      const index = Number(target.dataset.nodeId);
+      const key = kind === 'exception-include' ? 'includeKeywords' : 'excludeKeywords';
+      currentConfig().exceptionTags[index][key].splice(Number(target.dataset.index), 1);
+      renderConfigPanel();
+    } else if (kind.startsWith('common-')) {
       const node = currentCommonNode();
       node[`${kind === 'common-include' ? 'include' : 'exclude'}Keywords`].splice(Number(target.dataset.index), 1);
       renderCommonNodeList();
@@ -471,6 +596,19 @@ document.addEventListener('change', (event) => {
   }
   if (event.target.matches('[data-action="toggle-node-inherit"]')) {
     ensureNodeRules(currentConfig())[activeChannelNodeId].inheritCommon = event.target.checked;
+    renderConfigPanel();
+  }
+  if (event.target.matches('[data-action="toggle-special-inherit"]')) {
+    const nodeId = event.target.dataset.nodeId;
+    currentConfig().returnNodes[nodeId].inheritCommon = event.target.checked;
+    renderConfigPanel();
+  }
+  if (event.target.matches('[data-action="toggle-exception-tag"]')) {
+    currentConfig().exceptionTags[Number(event.target.dataset.index)].enabled = event.target.checked;
+    renderConfigPanel();
+  }
+  if (event.target.matches('[data-action="change-exception-priority"]')) {
+    currentConfig().exceptionTags[Number(event.target.dataset.index)].priority = Math.max(1, Number(event.target.value) || 1);
     renderConfigPanel();
   }
 });

@@ -70,7 +70,7 @@ a { color: inherit; }
 .toggle-control input:checked + i { background: #5ba4e8; }
 .toggle-control input:checked + i::after { transform: translateX(24px); }
 .rule-config-tabs { display: flex; margin-top: 24px; border-bottom: 1px solid var(--color-border); }
-.rule-config-tab { min-height: 34px; padding: 0 18px; border: 1px solid var(--color-border); border-bottom: 0; background: var(--color-bg-container); color: var(--color-text-secondary); cursor: pointer; font-size: 14px; }
+.rule-config-tab { min-height: 34px; padding: 0 16px; border: 1px solid var(--color-border); border-bottom: 0; background: var(--color-bg-container); color: var(--color-text-secondary); cursor: pointer; font-size: 14px; white-space: nowrap; }
 .rule-config-tab + .rule-config-tab { border-left: 0; }
 .rule-config-tab.is-active { border-color: var(--color-primary-6); background: #5ba4e8; color: #fff; }
 .config-section { margin-top: 18px; }
@@ -95,6 +95,46 @@ a { color: inherit; }
 .rule-config-form > .c-modal__foot { position: sticky; bottom: 0; margin: 28px -32px 0; padding: 16px 32px; background: var(--color-bg-container); }
 
 @media (max-width: 800px) { .c-rule-config-modal { width: calc(100vw - 16px); }.rule-config-form { padding: 20px 16px 0; }.rule-config-basic { grid-template-columns: 1fr; gap: 16px; }.rule-config-field--switch { grid-column: auto; }.rule-config-tabs { overflow-x: auto; }.rule-config-tab { flex: 0 0 auto; padding: 0 12px; }.keyword-rule-box { margin-left: 0; }.keyword-input-row { padding-left: 0; }.config-keyword-list { padding-left: 0; }.warning-rule-row { flex-wrap: wrap; gap: 8px; }.warning-rule-row > span:first-child { width: auto; text-align: left; }.rule-config-form > .c-modal__foot { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; } }
+
+/* 退回与包裹异常：在原有四个轨迹取值页签后补充二次节点和异常标签配置。 */
+.special-config-panel { margin-top: 18px; }
+.special-config-panel__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.special-config-panel__head .config-section__title { margin-bottom: 6px; }
+.special-config-panel__head p { margin: 0 0 16px; color: var(--color-text-tertiary); font-size: 13px; }
+.special-node-card, .exception-tag-card { margin: 0 0 14px; padding: 16px; border: 1px solid #dce8f5; border-radius: 6px; background: #fff; }
+.special-node-card__head, .exception-tag-card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.special-node-card__head strong, .exception-tag-card__head strong { display: inline-block; margin-right: 8px; color: var(--color-text); font-size: 16px; }
+.special-node-card__head p, .exception-tag-card__head p { margin: 6px 0 0; color: var(--color-text-tertiary); font-size: 12px; line-height: 1.5; }
+.special-source-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.special-source-row > div { min-height: 52px; padding: 10px 12px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #f8fafc; }
+.special-source-row > div > span, .exception-tag-meta { color: var(--color-text-tertiary); font-size: 12px; }
+.special-source-row .keyword-source-tags { margin-top: 7px; }
+.special-keyword-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.special-keyword-row > span { flex: 0 0 108px; color: var(--color-text-secondary); font-size: 13px; text-align: right; }
+.special-keyword-row .input { flex: 1; min-width: 0; height: 34px; }
+.special-keyword-list { min-height: 22px; padding: 6px 0 0 118px; }
+.special-effective { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding: 9px 12px; border-radius: 4px; background: #f0fdf4; color: #166534; font-size: 12px; }
+.special-effective i { color: #86efac; font-style: normal; }
+.special-effective small { flex-basis: 100%; color: #4d7c0f; }
+.special-config-tip { margin-top: 14px; padding: 11px 12px; border: 1px solid #dbeafe; border-radius: 4px; background: #f8fbff; color: var(--color-text-secondary); font-size: 12px; line-height: 1.6; }
+.special-config-tip strong { color: var(--color-primary-7); }
+.exception-rule-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 4px; background: #fafafa; }
+.exception-rule-summary div { display: grid; gap: 4px; }
+.exception-rule-summary strong { color: var(--color-text); font-size: 13px; }
+.exception-rule-summary span { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.5; }
+.exception-tag-card__head .inherit-switch { margin-top: 2px; }
+.exception-tag-meta { display: flex; align-items: center; gap: 16px; margin-top: 12px; padding-bottom: 10px; border-bottom: 1px solid #f0f2f5; }
+.exception-tag-meta label { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-secondary); }
+.exception-priority-input { width: 54px !important; height: 28px !important; padding: 0 6px !important; text-align: center; }
+
+@media (max-width: 700px) {
+  .special-config-panel__head, .special-node-card__head, .exception-tag-card__head { flex-direction: column; }
+  .special-source-row, .exception-rule-summary { grid-template-columns: 1fr; }
+  .special-keyword-row { align-items: stretch; flex-wrap: wrap; }
+  .special-keyword-row > span { flex-basis: 100%; text-align: left; }
+  .special-keyword-list { padding-left: 0; }
+  .exception-tag-meta { flex-wrap: wrap; gap: 8px 16px; }
+}
 
 /* 通用节点字典：渠道规则通过标准节点编码建立映射。 */
 .common-node-modal { width: min(920px, calc(100vw - 48px)); }

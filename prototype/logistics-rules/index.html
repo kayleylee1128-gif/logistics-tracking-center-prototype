@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>物流轨迹规则</title>
   <link rel="stylesheet" href="./tokens.css" />
-  <link rel="stylesheet" href="styles.css?v=tracking-value-rules-v7" />
+  <link rel="stylesheet" href="styles.css?v=tracking-value-rules-v8" />
 </head>
 <body>
   <div class="c-shell" data-collapsed="false">
@@ -76,7 +76,7 @@
         <label class="rule-config-field rule-config-field--switch"><span>查询状态：</span><label class="toggle-control"><input type="checkbox" name="queryEnabled" checked /><i></i></label></label>
         <label class="rule-config-field"><span><em>*</em> 映射单号：</span><div class="config-select-wrap"><input class="input config-select" name="mappingNo" value="请选择" readonly data-action="cycle-config-field" data-field="mappingNo" /><b>⌄</b></div></label>
       </div>
-      <nav class="rule-config-tabs" aria-label="轨迹取值设置"><button class="rule-config-tab is-active" type="button" data-action="select-config-tab" data-tab="online">上网取值设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="handover">交航取值设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="arrived">达到目的国设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="signed">签收取值设置</button></nav>
+      <nav class="rule-config-tabs" aria-label="轨迹取值设置"><button class="rule-config-tab is-active" type="button" data-action="select-config-tab" data-tab="online">上网取值设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="handover">交航取值设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="arrived">到达目的国设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="signed">签收取值设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="return">退回取值设置</button><button class="rule-config-tab" type="button" data-action="select-config-tab" data-tab="exception">包裹异常设置</button></nav>
       <div id="ruleConfigPanel"></div>
       <footer class="c-modal__foot"><span class="modal-readonly" id="commonRuleUpdatedAt">规则保存后仅影响后续轨迹识别</span><div class="c-modal__foot-actions"><button class="btn" type="button" data-action="close-common-rules">取消</button><button class="btn btn--solid btn--color-primary" type="submit">确定</button></div></footer>
     </form>
@@ -86,7 +86,7 @@
   <section class="c-modal common-node-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="commonNodeTitle">
     <header class="c-modal__head"><div><h2 class="c-modal__title" id="commonNodeTitle">通用节点配置</h2><p class="c-modal__subtitle">维护系统统一的标准业务节点，渠道规则通过映射引用。</p></div><button class="c-modal__close" type="button" data-action="close-common-nodes" aria-label="关闭">×</button></header>
     <div class="common-node-layout">
-      <aside class="common-node-list"><div class="common-node-list__head"><div><strong>标准节点</strong><span class="common-node-list__count" id="commonNodeCount">5 个</span></div><button class="btn btn--text btn--color-primary btn--sm" type="button" data-action="new-common-node">+ 新增节点</button></div><div id="commonNodeList"></div></aside>
+      <aside class="common-node-list"><div class="common-node-list__head"><div><strong>标准节点</strong><span class="common-node-list__count" id="commonNodeCount">6 个</span></div><button class="btn btn--text btn--color-primary btn--sm" type="button" data-action="new-common-node">+ 新增节点</button></div><div id="commonNodeList"></div></aside>
       <form class="common-node-form" id="commonNodeForm">
         <div class="common-node-form__title"><div><span class="common-rule-kicker">标准业务节点</span><h3 id="commonNodeFormTitle">退回中</h3></div><span class="tag tag--success" id="commonNodeStatus">启用</span></div>
         <div class="common-node-fields">
@@ -116,6 +116,6 @@
     <nav class="annotation-filters" id="annotationFilters"></nav>
     <div class="annotation-list" id="annotationList"></div>
   </aside>
-  <script src="script.js?v=tracking-value-rules-v6"></script>
+  <script src="script.js?v=tracking-value-rules-v7"></script>
 </body>
 </html>
