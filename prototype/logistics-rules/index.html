@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>物流轨迹规则</title>
   <link rel="stylesheet" href="./tokens.css" />
-  <link rel="stylesheet" href="styles.css?v=tracking-value-rules-v9" />
+  <link rel="stylesheet" href="styles.css?v=tracking-value-rules-v10" />
 </head>
 <body>
   <div class="c-shell" data-collapsed="false">
@@ -40,7 +40,7 @@
     <main class="c-shell__content">
       <header class="c-page-header" id="pageHeader" data-annotation-target="pageHeader">
         <div class="c-page-header__left"><h1 class="c-page-header__title">物流轨迹规则</h1><p class="c-page-header__desc">配置不同物流渠道的轨迹取值规则。</p></div>
-        <div class="c-page-header__actions"><span class="sync-status">最后更新：2026-08-08 10:54:06</span><button class="annotation-toggle" type="button" data-action="toggle-annotations">关闭标注</button><button class="btn" type="button" id="commonNodeEntry" data-annotation-target="commonNodeEntry" data-action="open-common-nodes">通用节点配置</button></div>
+        <div class="c-page-header__actions"><span class="sync-status">最后更新：2026-08-08 10:54:06</span><button class="annotation-toggle" type="button" data-action="toggle-annotations">关闭标注</button></div>
       </header>
 
       <section class="c-filter surface-panel" id="ruleFilter" data-annotation-target="ruleFilter" data-component="QueryFilterBar">
@@ -82,27 +82,6 @@
     </form>
   </section>
 
-  <div class="c-modal-mask common-node-mask" data-open="false" data-action="close-common-nodes"></div>
-  <section class="c-modal common-node-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="commonNodeTitle">
-    <header class="c-modal__head"><div><h2 class="c-modal__title" id="commonNodeTitle">通用节点配置</h2><p class="c-modal__subtitle">标准节点及关键词</p></div><button class="c-modal__close" type="button" data-action="close-common-nodes" aria-label="关闭">×</button></header>
-    <div class="common-node-layout">
-      <aside class="common-node-list"><div class="common-node-list__head"><div><strong>标准节点</strong><span class="common-node-list__count" id="commonNodeCount">6 个</span></div><button class="btn btn--text btn--color-primary btn--sm" type="button" data-action="new-common-node">+ 新增节点</button></div><div id="commonNodeList"></div></aside>
-      <form class="common-node-form" id="commonNodeForm">
-        <div class="common-node-form__title"><div><span class="common-rule-kicker">标准业务节点</span><h3 id="commonNodeFormTitle">退回中</h3></div><span class="tag tag--success" id="commonNodeStatus">启用</span></div>
-        <div class="common-node-fields">
-          <label class="form-field"><span>节点名称</span><input class="input" name="name" required maxlength="30" placeholder="例如：退回中" /></label>
-          <label class="form-field"><span>节点编码</span><input class="input" name="code" required maxlength="40" placeholder="例如：RETURNING" /></label>
-          <label class="form-field"><span>物流方向</span><input class="input" name="direction" required maxlength="20" placeholder="正向 / 逆向 / 通用" /></label>
-          <label class="form-field"><span>所属阶段</span><input class="input" name="phase" required maxlength="20" placeholder="运输 / 退回 / 异常" /></label>
-          <label class="form-field common-node-field--wide"><span>节点说明</span><textarea class="input" name="description" required maxlength="120" rows="3" placeholder="描述节点的业务含义和使用边界"></textarea></label>
-          <label class="form-field"><span>是否终态</span><input class="input" name="terminal" required maxlength="10" placeholder="是 / 否" /></label>
-          <label class="form-field"><span>状态</span><input class="input" name="enabled" required maxlength="10" placeholder="启用 / 停用" /></label>
-        </div>
-        <section class="common-node-keywords"><div class="common-node-keywords__title"><div><strong>节点默认识别规则</strong></div><span class="tag tag--processing">全渠道默认</span></div><div id="commonNodeKeywordConfig"></div></section>
-        <footer class="c-modal__foot"><span class="modal-readonly" id="commonNodeUpdatedAt">最近更新：—</span><div class="c-modal__foot-actions"><button class="btn" type="button" data-action="close-common-nodes">取消</button><button class="btn btn--solid btn--color-primary" type="submit">保存节点</button></div></footer>
-      </form>
-    </div>
-  </section>
   <div class="c-drawer-mask" data-action="close-drawer"></div>
   <aside class="c-drawer" data-open="false" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
     <div class="c-drawer__head"><div><h2 class="c-drawer__title" id="drawerTitle">编辑物流规则</h2><div class="drawer-subtitle" id="drawerSubtitle">—</div></div><button class="c-drawer__close" type="button" data-action="close-drawer" aria-label="关闭">×</button></div>
@@ -115,6 +94,6 @@
     <nav class="annotation-filters" id="annotationFilters"></nav>
     <div class="annotation-list" id="annotationList"></div>
   </aside>
-  <script src="script.js?v=tracking-value-rules-v8"></script>
+  <script src="script.js?v=tracking-value-rules-v9"></script>
 </body>
 </html>

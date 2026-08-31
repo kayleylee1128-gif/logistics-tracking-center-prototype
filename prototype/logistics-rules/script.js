@@ -22,7 +22,7 @@ function createPhaseConfig(mode = 'keyword') {
 }
 
 function createSpecialNodeRule(includeKeywords = [], excludeKeywords = []) {
-  return { configured: false, includeKeywords: [...includeKeywords], excludeKeywords: [...excludeKeywords] };
+  return { includeKeywords: [...includeKeywords], excludeKeywords: [...excludeKeywords] };
 }
 
 const returnNodeIds = ['returning', 'return-received', 'package-exception'];
@@ -37,8 +37,6 @@ function createExceptionTags() {
   return exceptionTagSeed.map((tag) => ({ ...tag, enabled: true, includeKeywords: [...tag.includeKeywords], excludeKeywords: [...tag.excludeKeywords] }));
 }
 
-const commonExceptionTags = createExceptionTags();
-
 function createSpecialConfig() {
   return {
     returnNodes: {
@@ -46,7 +44,7 @@ function createSpecialConfig() {
       'return-received': createSpecialNodeRule(),
       'package-exception': createSpecialNodeRule()
     },
-    exceptionTags: { configured: false, tags: [] }
+    exceptionTags: createExceptionTags().map((tag) => ({ ...tag, includeKeywords: [], excludeKeywords: [] }))
   };
 }
 
@@ -82,51 +80,23 @@ const commonNodes = [
   { id: 'delivery-failed', name: '派送失败', code: 'DELIVERY_FAILED', direction: '正向', phase: '异常', description: '末端派送未成功，需重新派送或人工处理。', terminal: '否', enabled: '启用', updatedAt: '2026-07-21 16:42', operator: 'Fiona' }
 ];
 
-const commonKeywordSeed = {
-  returning: { includeKeywords: ['退回', 'returned to sender', 'return to sender'], excludeKeywords: ['已签收', 'delivered'] },
-  'return-received': { includeKeywords: ['退回签收', 'return received', 'returned'], excludeKeywords: [] },
-  'package-exception': { includeKeywords: ['包裹异常', 'package exception', 'shipment exception'], excludeKeywords: [] },
-  'package-lost': { includeKeywords: ['丢件', 'lost', 'missing package', '无法投递'], excludeKeywords: ['找到包裹', 'located'] },
-  'package-damaged': { includeKeywords: ['破损', 'damaged', '损坏', 'broken'], excludeKeywords: [] },
-  'delivery-failed': { includeKeywords: ['派送失败', 'delivery failed', 'attempted delivery', 'delivery exception'], excludeKeywords: ['已签收', 'delivered'] }
-};
-
-commonNodes.forEach((node) => {
-  const seed = commonKeywordSeed[node.id] || { includeKeywords: [], excludeKeywords: [] };
-  node.matchMode = node.matchMode || '任一关键词命中';
-  node.includeKeywords = node.includeKeywords || [...seed.includeKeywords];
-  node.excludeKeywords = node.excludeKeywords || [...seed.excludeKeywords];
-});
-
 function ensureSpecialConfig(config) {
   config.returnNodes = config.returnNodes || {};
   const seed = createSpecialConfig();
   returnNodeIds.forEach((id) => {
     config.returnNodes[id] = config.returnNodes[id] || seed.returnNodes[id];
     const rule = config.returnNodes[id];
-    if (rule.configured === undefined) rule.configured = rule.inheritCommon === false;
+    delete rule.inheritCommon;
   });
-  if (Array.isArray(config.exceptionTags)) config.exceptionTags = { configured: true, tags: config.exceptionTags };
-  config.exceptionTags = config.exceptionTags || { configured: false, tags: [] };
+  if (config.exceptionTags && !Array.isArray(config.exceptionTags) && Array.isArray(config.exceptionTags.tags)) config.exceptionTags = config.exceptionTags.tags;
+  config.exceptionTags = config.exceptionTags || seed.exceptionTags;
   return config;
-}
-
-function ensureNodeRules(config) {
-  config.nodeRules = config.nodeRules || {};
-  commonNodes.forEach((node) => {
-    config.nodeRules[node.id] = config.nodeRules[node.id] || { configured: false, includeKeywords: [], excludeKeywords: [] };
-    if (config.nodeRules[node.id].configured === undefined) config.nodeRules[node.id].configured = config.nodeRules[node.id].inheritCommon === false;
-  });
-  return config.nodeRules;
 }
 
 let activeConfigId = 'r1';
 let activeConfigTab = 'online';
 let configIsNew = false;
 let filterState = { carrier: '全部物流商', channel: '全部物流渠道', queryEnabled: '全部状态' };
-let activeCommonNodeId = 'returning';
-let commonNodeIsNew = false;
-let activeChannelNodeId = 'returning';
 let annotationMode = true;
 let annotationFilter = '全部';
 let activeAnnotationId = null;
@@ -161,13 +131,12 @@ function legacyRuleSummary(config, phase) {
 const annotations = [
   { id: 1, type: '页面', title: '物流规则页面', target: 'pageHeader', description: '模块目的：维护渠道规则与标准节点。适用角色为物流运营和管理员；入口来自物流配置菜单，上游是承运商轨迹，下游是物流轨迹中心和异常报表。' },
   { id: 2, type: '字段', title: '渠道筛选条件', target: 'ruleFilter', description: '按物流商、物流渠道和查询状态筛选渠道规则；默认全部，数据来源为规则配置列表，点击查询后刷新结果。' },
-  { id: 3, type: '交互', title: '通用节点配置', target: 'commonNodeEntry', description: '点击右上角入口打开弹窗，维护标准节点属性及通用默认关键词、排除关键词；保存后作为所有渠道的基础识别规则，不跳转新页面。' },
-  { id: 4, type: '交互', title: '添加规则', target: 'channelRuleEntry', description: '点击打开渠道规则表单，保留原有物流商、物流渠道、映射单号和轨迹取值设置，并在编辑区域选择对应通用节点；必填项缺失时阻断保存。' },
-  { id: 5, type: '规则', title: '渠道规则映射', target: 'ruleTable', description: '渠道维度继承通用关键词，只维护承运商差异化的补充词和排除词；最终映射到统一节点，避免每个渠道重复维护整套规则。' },
-  { id: 6, type: '规则', title: '取值与预警', target: 'ruleFooter', description: '上网、交航、到达目的国、签收分别配置轨迹判断方式；预警天数按当前时间与交运时间的差值判断，历史结果不回溯。' },
-  { id: 7, type: '页面', title: '退回取值设置', target: 'returnConfigPanel', description: '退回节点按退回中、退回签收、包裹异常三个二次节点识别；渠道已配置时优先执行渠道规则，未配置时回退通用规则。' },
-  { id: 8, type: '规则', title: '包裹异常标签', target: 'exceptionConfigPanel', description: '包裹异常为统一二级节点；渠道已配置时按渠道标签规则命中，未配置时执行通用标签规则。同一条轨迹多标签命中时按优先级取最高项，包裹历史标签不覆盖。' },
-  { id: 9, type: '待确认', title: '异常标签触发条件', target: 'exceptionConfigPanel', description: '待确认：查不到轨迹、轨迹同步失败是否由系统超时/任务失败条件与关键词共同触发，以及阈值和标签是否允许多选。影响异常召回率和误报率。' }
+  { id: 3, type: '交互', title: '添加规则', target: 'channelRuleEntry', description: '点击打开渠道规则表单，保留原有物流商、物流渠道、映射单号和轨迹取值设置；必填项缺失时阻断保存。' },
+  { id: 4, type: '规则', title: '渠道规则配置', target: 'ruleTable', description: '渠道维度直接配置完整关键词，未配置关键词的节点不参与识别；数据清洗后统一映射到标准节点编码。' },
+  { id: 5, type: '规则', title: '取值与预警', target: 'ruleFooter', description: '上网、交航、到达目的国、签收分别配置轨迹判断方式；预警天数按当前时间与交运时间的差值判断，历史结果不回溯。' },
+  { id: 6, type: '页面', title: '退回取值设置', target: 'returnConfigPanel', description: '退回节点按退回中、退回签收、包裹异常三个二次节点直接配置渠道关键词。' },
+  { id: 7, type: '规则', title: '包裹异常标签', target: 'exceptionConfigPanel', description: '包裹异常下维护查不到轨迹、派送失败、丢件和轨迹同步失败标签；按关键词命中并按优先级处理冲突。' },
+  { id: 8, type: '待确认', title: '异常标签触发条件', target: 'exceptionConfigPanel', description: '待确认：查不到轨迹、轨迹同步失败是否叠加系统超时/任务失败条件，以及标签是否允许多选。' }
 ];
 
 const annotationTypes = ['全部', '页面', '字段', '交互', '规则', '待确认'];
@@ -250,25 +219,6 @@ function renderTags(items, kind) {
   return items.map((item, index) => `<span class="tag tag--default config-keyword-tag">${item}${removable ? `<button type="button" data-action="remove-keyword" data-kind="${kind}" data-index="${index}" aria-label="删除${item}">×</button>` : ''}</span>`).join('');
 }
 
-function renderChannelNodeRule(config) {
-  ensureNodeRules(config);
-  const node = commonNodes.find((item) => item.id === activeChannelNodeId) || commonNodes[0];
-  activeChannelNodeId = node.id;
-  const rule = config.nodeRules[node.id];
-  const globalInclude = node.includeKeywords || [];
-  const globalExclude = node.excludeKeywords || [];
-  const effectiveInclude = rule.configured ? rule.includeKeywords : globalInclude;
-  const effectiveExclude = rule.configured ? rule.excludeKeywords : globalExclude;
-  return `<section class="channel-node-rule-card">
-    <div class="channel-node-rule-card__head"><div><span class="common-rule-kicker">对应节点配置</span><strong>选择通用节点</strong></div><label class="inherit-switch"><input type="checkbox" data-action="toggle-node-inherit" ${rule.configured ? 'checked' : ''} /><span></span><b>${rule.configured ? '配置本渠道规则' : '启用渠道配置'}</b></label></div>
-    <div class="channel-node-selector"><span>对应节点</span><select class="input" id="channelNodeSelect" data-action="select-channel-node">${commonNodes.map((item) => `<option value="${item.id}" ${item.id === node.id ? 'selected' : ''}>${item.name} · ${item.code}</option>`).join('')}</select><span class="channel-node-selector__hint">当前渠道：${config.channel === '请选择' ? '待选择' : config.channel}</span></div>
-    <div class="keyword-source-grid"><div><span class="keyword-source-label">通用默认关键词</span><div class="keyword-source-tags">${renderTags(globalInclude, 'readonly')}</div></div><div><span class="keyword-source-label">通用排除关键词</span><div class="keyword-source-tags">${renderTags(globalExclude, 'readonly')}</div></div></div>
-    <div class="channel-keyword-editor"><div class="common-keyword-row"><span>渠道补充关键词</span><input class="input" id="channelIncludeKeywordInput" placeholder="例如：承运商专属英文状态" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-channel-keyword" data-kind="include">添加</button></div><div class="config-keyword-list channel-keyword-list">${renderTags(rule.includeKeywords, 'channel-include')}</div>
-    <div class="common-keyword-row"><span>渠道排除关键词</span><input class="input" id="channelExcludeKeywordInput" placeholder="例如：仅表示已签收的状态" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-channel-keyword" data-kind="exclude">添加</button></div><div class="config-keyword-list channel-keyword-list">${renderTags(rule.excludeKeywords, 'channel-exclude')}</div></div>
-    <div class="effective-rule-preview"><span>最终生效</span><div><strong>${effectiveInclude.length} 个命中词</strong><em>+</em><strong>${effectiveExclude.length} 个排除词</strong><small>保存后仅影响当前物流渠道，不改变通用节点口径。</small></div></div>
-  </section>`;
-}
-
 function renderSpecialTags(items, scope, nodeId = '') {
   return items.map((item, index) => `<span class="tag tag--default config-keyword-tag">${item}<button type="button" data-action="remove-keyword" data-kind="${scope}" data-node-id="${nodeId}" data-index="${index}" aria-label="删除${item}">×</button></span>`).join('');
 }
@@ -278,19 +228,11 @@ function renderReturnConfig(config) {
   const nodeCards = returnNodeIds.map((nodeId) => {
     const node = commonNodes.find((item) => item.id === nodeId);
     const rule = config.returnNodes[nodeId];
-    const globalInclude = node?.includeKeywords || [];
-    const globalExclude = node?.excludeKeywords || [];
-    const effectiveInclude = rule.configured ? rule.includeKeywords : globalInclude;
-    const effectiveExclude = rule.configured ? rule.excludeKeywords : globalExclude;
-    const statusText = rule.configured ? '已配置渠道规则' : '未配置 · 执行通用逻辑';
-    const localEditor = rule.configured ? `<div class="special-keyword-row"><span>命中关键词</span><input class="input" id="returnInclude-${nodeId}" placeholder="请输入渠道关键词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-special-keyword" data-scope="return" data-node-id="${nodeId}" data-kind="include">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(rule.includeKeywords, 'return-include', nodeId)}</div>
-      <div class="special-keyword-row"><span>排除关键词</span><input class="input" id="returnExclude-${nodeId}" placeholder="请输入渠道排除词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-special-keyword" data-scope="return" data-node-id="${nodeId}" data-kind="exclude">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(rule.excludeKeywords, 'return-exclude', nodeId)}</div>` : `<div class="special-fallback-state">当前渠道未配置该节点，保存时将执行通用节点规则</div>`;
-    return `<article class="special-node-card"><div class="special-node-card__head"><div><strong>${node?.name || nodeId}</strong><span class="tag ${rule.configured ? 'tag--processing' : 'tag--default'}">${statusText}</span></div><label class="inherit-switch"><input type="checkbox" data-action="toggle-special-config" data-node-id="${nodeId}" ${rule.configured ? 'checked' : ''} /><span></span><b>${rule.configured ? '配置本渠道规则' : '启用渠道配置'}</b></label></div>
-      <div class="special-source-row"><div><span>通用命中关键词（兜底）</span><div class="keyword-source-tags">${renderTags(globalInclude, 'readonly')}</div></div><div><span>通用排除关键词（兜底）</span><div class="keyword-source-tags">${renderTags(globalExclude, 'readonly')}</div></div></div>
-      ${localEditor}
-      <div class="special-effective"><span>当前生效</span><strong>${effectiveInclude.length} 个命中词</strong><i>+</i><strong>${effectiveExclude.length} 个排除词</strong><small>${rule.configured ? '执行本渠道规则，不自动叠加通用规则' : '节点未配置渠道规则，执行通用规则'}</small></div></article>`;
+    return `<article class="special-node-card"><div class="special-node-card__head"><strong>${node?.name || nodeId}</strong></div>
+      <div class="special-keyword-row"><span>命中关键词</span><input class="input" id="returnInclude-${nodeId}" placeholder="请输入渠道关键词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-special-keyword" data-scope="return" data-node-id="${nodeId}" data-kind="include">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(rule.includeKeywords, 'return-include', nodeId)}</div>
+      <div class="special-keyword-row"><span>排除关键词</span><input class="input" id="returnExclude-${nodeId}" placeholder="请输入渠道排除词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-special-keyword" data-scope="return" data-node-id="${nodeId}" data-kind="exclude">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(rule.excludeKeywords, 'return-exclude', nodeId)}</div></article>`;
   }).join('');
-  return `<section class="special-config-panel" id="returnConfigPanel" data-annotation-target="returnConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">退回二次节点关键词</div></div><span class="tag tag--processing">渠道规则优先</span></div>${nodeCards}</section>`;
+  return `<section class="special-config-panel" id="returnConfigPanel" data-annotation-target="returnConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">退回二次节点关键词</div></div></div>${nodeCards}</section>`;
 }
 
 function renderExceptionTags(items) {
@@ -299,10 +241,7 @@ function renderExceptionTags(items) {
 
 function renderExceptionConfig(config) {
   ensureSpecialConfig(config);
-  const rule = config.exceptionTags;
-  const commonReference = commonExceptionTags.map((tag) => `<div class="exception-common-row"><strong>${tag.name}</strong><div class="keyword-source-tags">${renderTags(tag.includeKeywords, 'readonly')}</div></div>`).join('');
-  const localEditor = rule.configured ? `${renderExceptionTags(rule.tags)}<button class="btn btn--sm exception-add-tag" type="button" data-action="add-exception-tag">+ 新增标签</button>` : `<div class="special-fallback-state">当前渠道未配置异常标签，保存时将执行通用标签规则</div>`;
-  return `<section class="special-config-panel" id="exceptionConfigPanel" data-annotation-target="exceptionConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">包裹异常标签规则</div></div><label class="inherit-switch"><input type="checkbox" data-action="toggle-exception-config" ${rule.configured ? 'checked' : ''} /><span></span><b>${rule.configured ? '配置本渠道规则' : '启用渠道配置'}</b></label></div><div class="exception-common-reference"><span>通用标签规则（兜底）</span>${commonReference}</div>${localEditor}</section>`;
+  return `<section class="special-config-panel" id="exceptionConfigPanel" data-annotation-target="exceptionConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">包裹异常标签规则</div></div><button class="btn btn--sm" type="button" data-action="add-exception-tag">+ 新增标签</button></div>${renderExceptionTags(config.exceptionTags)}</section>`;
 }
 
 function renderConfigPanel() {
@@ -345,8 +284,6 @@ function openChannelRule(id = activeConfigId, isNew = false) {
   activeConfigId = id;
   configIsNew = isNew;
   activeConfigTab = 'online';
-  activeChannelNodeId = 'returning';
-  ensureNodeRules(currentConfig());
   ensureSpecialConfig(currentConfig());
   fillConfigForm();
   $('.c-modal').dataset.open = 'true';
@@ -362,93 +299,6 @@ function closeChannelRule() {
   }
   $('.c-modal').dataset.open = 'false';
   $('.c-modal-mask').dataset.open = 'false';
-}
-
-function currentCommonNode() { return commonNodes.find((node) => node.id === activeCommonNodeId); }
-
-function renderCommonNodeList() {
-  const selected = currentCommonNode() || commonNodes[0];
-  activeCommonNodeId = selected.id;
-  $('#commonNodeCount').textContent = `${commonNodes.length} 个`;
-  $('#commonNodeList').innerHTML = commonNodes.map((node) => `<button class="common-node-list__item${node.id === selected.id ? ' is-active' : ''}" type="button" data-action="select-common-node" data-id="${node.id}"><strong>${node.name || '未命名节点'}</strong><span>${node.code}</span><small>通用词 ${node.includeKeywords?.length || 0} · 排除词 ${node.excludeKeywords?.length || 0}</small></button>`).join('');
-}
-
-function renderCommonNodeKeywordConfig() {
-  const node = currentCommonNode();
-  if (!node || !$('#commonNodeKeywordConfig')) return;
-  $('#commonNodeKeywordConfig').innerHTML = `<div class="common-keyword-config__head"><div><strong>通用默认关键词</strong></div><span class="tag tag--processing">${node.matchMode}</span></div>
-    <div class="common-keyword-row"><span>命中关键词</span><input class="input" id="commonIncludeKeywordInput" placeholder="输入中文或英文状态词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-common-keyword" data-kind="include">添加</button></div>
-    <div class="config-keyword-list common-keyword-list">${renderTags(node.includeKeywords, 'common-include')}</div>
-    <div class="common-keyword-row"><span>排除关键词</span><input class="input" id="commonExcludeKeywordInput" placeholder="避免误判的状态词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-common-keyword" data-kind="exclude">添加</button></div>
-    <div class="config-keyword-list common-keyword-list">${renderTags(node.excludeKeywords, 'common-exclude')}</div>`;
-}
-
-function fillCommonNodeForm() {
-  const node = currentCommonNode();
-  if (!node) return;
-  const form = $('#commonNodeForm');
-  $('#commonNodeFormTitle').textContent = node.name || '新增标准节点';
-  $('#commonNodeStatus').textContent = node.enabled;
-  $('#commonNodeStatus').className = `tag ${node.enabled === '启用' ? 'tag--success' : 'tag--default'}`;
-  form.elements.name.value = node.name;
-  form.elements.code.value = node.code;
-  form.elements.direction.value = node.direction;
-  form.elements.phase.value = node.phase;
-  form.elements.description.value = node.description;
-  form.elements.terminal.value = node.terminal;
-  form.elements.enabled.value = node.enabled;
-  renderCommonNodeKeywordConfig();
-  $('#commonNodeUpdatedAt').textContent = node.updatedAt === '未保存' ? '新建节点 · 尚未保存' : `最近更新：${node.updatedAt} · ${node.operator}`;
-}
-
-function openCommonNodes() {
-  commonNodeIsNew = false;
-  renderCommonNodeList();
-  fillCommonNodeForm();
-  $('.common-node-modal').dataset.open = 'true';
-  $('.common-node-mask').dataset.open = 'true';
-}
-
-function closeCommonNodes() {
-  if (commonNodeIsNew) {
-    const index = commonNodes.findIndex((node) => node.id === activeCommonNodeId && node.updatedAt === '未保存');
-    if (index >= 0) commonNodes.splice(index, 1);
-    commonNodeIsNew = false;
-  }
-  $('.common-node-modal').dataset.open = 'false';
-  $('.common-node-mask').dataset.open = 'false';
-}
-
-function newCommonNode() {
-  const node = { id: `node-${Date.now()}`, name: '', code: '', direction: '通用', phase: '异常', description: '', terminal: '否', enabled: '启用', updatedAt: '未保存', operator: '当前用户' };
-  commonNodes.push(node);
-  activeCommonNodeId = node.id;
-  commonNodeIsNew = true;
-  renderCommonNodeList();
-  fillCommonNodeForm();
-  window.setTimeout(() => $('#commonNodeForm').elements.name.focus(), 0);
-}
-
-function saveCommonNode(event) {
-  event.preventDefault();
-  const node = currentCommonNode();
-  const form = event.currentTarget;
-  if (!node) return;
-  const data = new FormData(form);
-  node.name = data.get('name').trim();
-  node.code = data.get('code').trim().toUpperCase();
-  node.direction = data.get('direction').trim();
-  node.phase = data.get('phase').trim();
-  node.description = data.get('description').trim();
-  node.terminal = data.get('terminal').trim();
-  node.enabled = data.get('enabled').trim();
-  if (!node.name || !node.code || !node.description) { showToast('请完善节点名称、编码和节点说明'); return; }
-  node.updatedAt = new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-');
-  node.operator = '当前用户';
-  commonNodeIsNew = false;
-  renderCommonNodeList();
-  fillCommonNodeForm();
-  showToast(`标准节点“${node.name}”已保存`);
 }
 
 function saveCommonRule(event) {
@@ -491,7 +341,6 @@ document.addEventListener('click', (event) => {
   if (action === 'filter-annotations') { annotationFilter = event.target.closest('[data-filter]').dataset.filter; renderAnnotationPanel(); return; }
   if (action === 'focus-annotation') { focusAnnotation(id); return; }
   if (action === 'collapse') { const shell = $('.c-shell'); shell.dataset.collapsed = shell.dataset.collapsed === 'true' ? 'false' : 'true'; }
-  if (action === 'open-common-nodes') openCommonNodes();
   if (action === 'switch-legacy-tab') {
     $$('.legacy-rule-tab').forEach((tab) => tab.classList.toggle('is-active', tab === event.target.closest('.legacy-rule-tab')));
     showToast(`已切换${event.target.closest('.legacy-rule-tab').textContent.trim()}规则`);
@@ -501,9 +350,6 @@ document.addEventListener('click', (event) => {
   if (action === 'copy-rule') { const source = ruleConfigs.find((rule) => rule.id === id); if (source) { const copy = JSON.parse(JSON.stringify(source)); copy.id = `r-${Date.now()}`; copy.channel = `${source.channel}-副本`; copy.updatedAt = '未保存'; copy.operator = '当前用户'; ruleConfigs.push(copy); renderRows(); showToast('规则已复制'); } }
   if (action === 'delete-rule') { const index = ruleConfigs.findIndex((rule) => rule.id === id); if (index >= 0) { ruleConfigs.splice(index, 1); renderRows(); showToast('规则已删除'); } }
   if (action === 'close-common-rules') closeChannelRule();
-  if (action === 'close-common-nodes') closeCommonNodes();
-  if (action === 'new-common-node') newCommonNode();
-  if (action === 'select-common-node') { activeCommonNodeId = id; renderCommonNodeList(); fillCommonNodeForm(); }
   if (action === 'select-config-tab') { activeConfigTab = event.target.closest('[data-tab]').dataset.tab; renderConfigPanel(); }
   if (action === 'cycle-config-field') cycleConfigField(event.target.closest('[data-field]').dataset.field);
   if (action === 'change-track-mode') { const config = currentConfig(); if (config) { config.phases[activeConfigTab].mode = event.target.value; renderConfigPanel(); } }
@@ -513,27 +359,6 @@ document.addEventListener('click', (event) => {
     const value = input.value.trim();
     if (!value) return;
     currentConfig().phases[activeConfigTab][kind === 'include' ? 'includeKeywords' : 'excludeKeywords'].push(value);
-    input.value = '';
-    renderConfigPanel();
-  }
-  if (action === 'add-common-keyword') {
-    const kind = event.target.closest('[data-kind]').dataset.kind;
-    const input = $(`#common${kind === 'include' ? 'Include' : 'Exclude'}KeywordInput`);
-    const value = input.value.trim();
-    if (!value) return;
-    const node = currentCommonNode();
-    node[`${kind}Keywords`].push(value);
-    input.value = '';
-    renderCommonNodeList();
-    renderCommonNodeKeywordConfig();
-  }
-  if (action === 'add-channel-keyword') {
-    const kind = event.target.closest('[data-kind]').dataset.kind;
-    const input = $(`#channel${kind === 'include' ? 'Include' : 'Exclude'}KeywordInput`);
-    const value = input.value.trim();
-    if (!value) return;
-    const rule = ensureNodeRules(currentConfig())[activeChannelNodeId];
-    rule[`${kind}Keywords`].push(value);
     input.value = '';
     renderConfigPanel();
   }
@@ -556,15 +381,14 @@ document.addEventListener('click', (event) => {
     const input = $(`#exception${kind === 'include' ? 'Include' : 'Exclude'}-${index}`);
     const value = input?.value.trim();
     if (!value) return;
-    currentConfig().exceptionTags.tags[index][`${kind}Keywords`].push(value);
+    currentConfig().exceptionTags[index][`${kind}Keywords`].push(value);
     input.value = '';
     renderConfigPanel();
   }
   if (action === 'add-exception-tag') {
     const config = ensureSpecialConfig(currentConfig());
-    if (!config.exceptionTags.configured) return;
-    const nextPriority = Math.max(...config.exceptionTags.tags.map((tag) => Number(tag.priority) || 0), 0) + 1;
-    config.exceptionTags.tags.push({ id: `custom-${Date.now()}`, name: '新异常标签', priority: nextPriority, source: '轨迹关键词', description: '', enabled: true, includeKeywords: [], excludeKeywords: [] });
+    const nextPriority = Math.max(...config.exceptionTags.map((tag) => Number(tag.priority) || 0), 0) + 1;
+    config.exceptionTags.push({ id: `custom-${Date.now()}`, name: '新异常标签', priority: nextPriority, source: '轨迹关键词', description: '', enabled: true, includeKeywords: [], excludeKeywords: [] });
     renderConfigPanel();
     showToast('已新增异常标签，请补充关键词');
   }
@@ -579,16 +403,7 @@ document.addEventListener('click', (event) => {
     } else if (kind.startsWith('exception-')) {
       const index = Number(target.dataset.nodeId);
       const key = kind === 'exception-include' ? 'includeKeywords' : 'excludeKeywords';
-      currentConfig().exceptionTags.tags[index][key].splice(Number(target.dataset.index), 1);
-      renderConfigPanel();
-    } else if (kind.startsWith('common-')) {
-      const node = currentCommonNode();
-      node[`${kind === 'common-include' ? 'include' : 'exclude'}Keywords`].splice(Number(target.dataset.index), 1);
-      renderCommonNodeList();
-      renderCommonNodeKeywordConfig();
-    } else if (kind.startsWith('channel-')) {
-      const rule = ensureNodeRules(currentConfig())[activeChannelNodeId];
-      rule[`${kind === 'channel-include' ? 'include' : 'exclude'}Keywords`].splice(Number(target.dataset.index), 1);
+      currentConfig().exceptionTags[index][key].splice(Number(target.dataset.index), 1);
       renderConfigPanel();
     } else {
       const list = currentConfig().phases[activeConfigTab][kind === 'include' ? 'includeKeywords' : 'excludeKeywords'];
@@ -602,37 +417,12 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('change', (event) => {
-  if (event.target.matches('[data-action="select-channel-node"]')) {
-    activeChannelNodeId = event.target.value;
-    renderConfigPanel();
-  }
-  if (event.target.matches('[data-action="toggle-node-inherit"]')) {
-    ensureNodeRules(currentConfig())[activeChannelNodeId].configured = event.target.checked;
-    renderConfigPanel();
-  }
-  if (event.target.matches('[data-action="toggle-special-config"]')) {
-    const nodeId = event.target.dataset.nodeId;
-    const rule = currentConfig().returnNodes[nodeId];
-    rule.configured = event.target.checked;
-    if (rule.configured && !rule.includeKeywords.length && !rule.excludeKeywords.length) {
-      const node = commonNodes.find((item) => item.id === nodeId);
-      rule.includeKeywords = [...(node?.includeKeywords || [])];
-      rule.excludeKeywords = [...(node?.excludeKeywords || [])];
-    }
-    renderConfigPanel();
-  }
   if (event.target.matches('[data-action="toggle-exception-tag"]')) {
-    currentConfig().exceptionTags.tags[Number(event.target.dataset.index)].enabled = event.target.checked;
+    currentConfig().exceptionTags[Number(event.target.dataset.index)].enabled = event.target.checked;
     renderConfigPanel();
   }
   if (event.target.matches('[data-action="change-exception-priority"]')) {
-    currentConfig().exceptionTags.tags[Number(event.target.dataset.index)].priority = Math.max(1, Number(event.target.value) || 1);
-    renderConfigPanel();
-  }
-  if (event.target.matches('[data-action="toggle-exception-config"]')) {
-    const rule = currentConfig().exceptionTags;
-    rule.configured = event.target.checked;
-    if (rule.configured && !rule.tags.length) rule.tags = createExceptionTags();
+    currentConfig().exceptionTags[Number(event.target.dataset.index)].priority = Math.max(1, Number(event.target.value) || 1);
     renderConfigPanel();
   }
 });
@@ -647,11 +437,9 @@ $$('[data-filter]').forEach((filter) => filter.addEventListener('click', () => {
 
 $('#keywordInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') renderRows(); });
 $('#commonRuleForm').addEventListener('submit', saveCommonRule);
-$('#commonNodeForm').addEventListener('submit', saveCommonNode);
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
   if ($('.c-rule-config-modal').dataset.open === 'true') closeChannelRule();
-  if ($('.common-node-modal').dataset.open === 'true') closeCommonNodes();
 });
 renderRows();
 document.body.classList.add('annotation-mode-on');
