@@ -109,6 +109,11 @@ a { color: inherit; }
 .special-keyword-row > span { flex: 0 0 108px; color: var(--color-text-secondary); font-size: 13px; text-align: right; }
 .special-keyword-row .input { flex: 1; min-width: 0; height: 34px; }
 .special-keyword-list { min-height: 22px; padding: 6px 0 0 118px; }
+.exception-tag-card--draft { border-style: dashed; background: #fbfcfe; }
+.exception-tag-name-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.exception-tag-name-row > span { flex: 0 0 108px; color: var(--color-text-secondary); font-size: 13px; text-align: right; }
+.exception-tag-name-row .input { flex: 1; min-width: 0; height: 34px; }
+.exception-tag-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #e8eef5; }
 .exception-add-tag { margin: 0 0 14px 118px; color: var(--color-primary-6); border-color: #c8e1f7; }
 .exception-tag-meta { display: flex; align-items: center; gap: 16px; margin-top: 12px; padding-bottom: 10px; border-bottom: 1px solid #f0f2f5; }
 .exception-tag-meta label { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-secondary); }
@@ -116,8 +121,8 @@ a { color: inherit; }
 
 @media (max-width: 700px) {
   .special-config-panel__head, .special-node-card__head, .exception-tag-card__head { flex-direction: column; }
-  .special-keyword-row { align-items: stretch; flex-wrap: wrap; }
-  .special-keyword-row > span { flex-basis: 100%; text-align: left; }
+  .special-keyword-row, .exception-tag-name-row { align-items: stretch; flex-wrap: wrap; }
+  .special-keyword-row > span, .exception-tag-name-row > span { flex-basis: 100%; text-align: left; }
   .special-keyword-list { padding-left: 0; }
   .exception-tag-meta { flex-wrap: wrap; gap: 8px 16px; }
 }

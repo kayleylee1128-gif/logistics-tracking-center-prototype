@@ -92,7 +92,13 @@ function ensureSpecialConfig(config) {
   });
   delete config.returnNodes['package-exception'];
   if (config.exceptionTags && !Array.isArray(config.exceptionTags) && Array.isArray(config.exceptionTags.tags)) config.exceptionTags = config.exceptionTags.tags;
-  config.exceptionTags = Array.isArray(config.exceptionTags) ? config.exceptionTags.filter((tag) => exceptionTagSeed.some((item) => item.id === tag.id)) : seed.exceptionTags;
+  config.exceptionTags = Array.isArray(config.exceptionTags)
+    ? config.exceptionTags.filter((tag) => tag && !['no-tracking', 'tracking-sync-failed'].includes(tag.id)).map((tag) => ({
+      ...tag,
+      includeKeywords: Array.isArray(tag.includeKeywords) ? tag.includeKeywords : [],
+      excludeKeywords: Array.isArray(tag.excludeKeywords) ? tag.excludeKeywords : []
+    }))
+    : seed.exceptionTags;
   return config;
 }
 
@@ -103,6 +109,7 @@ let filterState = { carrier: '全部物流商', channel: '全部物流渠道', q
 let annotationMode = true;
 let annotationFilter = '全部';
 let activeAnnotationId = null;
+let draftExceptionTag = null;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -236,16 +243,21 @@ function renderReturnConfig(config) {
       <div class="special-keyword-row"><span>命中关键词</span><input class="input" id="returnInclude-${nodeId}" placeholder="请输入渠道关键词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-special-keyword" data-scope="return" data-node-id="${nodeId}" data-kind="include">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(rule.includeKeywords, 'return-include', nodeId)}</div>
       <div class="special-keyword-row"><span>排除关键词</span><input class="input" id="returnExclude-${nodeId}" placeholder="请输入渠道排除词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-special-keyword" data-scope="return" data-node-id="${nodeId}" data-kind="exclude">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(rule.excludeKeywords, 'return-exclude', nodeId)}</div></article>`;
   }).join('');
-  return `<section class="special-config-panel" id="returnConfigPanel" data-annotation-target="returnConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">退回二次节点关键词</div></div></div>${nodeCards}</section>`;
+  return `<section class="special-config-panel" id="returnConfigPanel" data-annotation-target="returnConfigPanel">${nodeCards}</section>`;
 }
 
 function renderExceptionTags(items) {
   return items.map((tag, index) => `<article class="exception-tag-card"><div class="exception-tag-card__head"><strong>${tag.name}</strong></div><div class="special-keyword-row"><span>命中关键词</span><input class="input" id="exceptionInclude-${index}" placeholder="请输入承运商状态词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-keyword" data-kind="include" data-index="${index}">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(tag.includeKeywords, 'exception-include', String(index))}</div><div class="special-keyword-row"><span>排除关键词</span><input class="input" id="exceptionExclude-${index}" placeholder="请输入排除词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-keyword" data-kind="exclude" data-index="${index}">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(tag.excludeKeywords, 'exception-exclude', String(index))}</div></article>`).join('');
 }
 
+function renderExceptionTagDraft() {
+  if (!draftExceptionTag) return '';
+  return `<article class="exception-tag-card exception-tag-card--draft"><div class="exception-tag-card__head"><strong>新增异常标签</strong></div><div class="exception-tag-name-row"><span>标签名称</span><input class="input" id="exceptionDraftName" placeholder="请输入标签名称" value="${draftExceptionTag.name}" /></div><div class="special-keyword-row"><span>命中关键词</span><input class="input" id="exceptionDraftInclude" placeholder="请输入承运商状态词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-draft-keyword" data-kind="include">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(draftExceptionTag.includeKeywords, 'draft-include')}</div><div class="special-keyword-row"><span>排除关键词</span><input class="input" id="exceptionDraftExclude" placeholder="请输入排除词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-draft-keyword" data-kind="exclude">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(draftExceptionTag.excludeKeywords, 'draft-exclude')}</div><div class="exception-tag-form-actions"><button class="btn btn--sm" type="button" data-action="cancel-exception-tag">取消</button><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="save-exception-tag">保存标签</button></div></article>`;
+}
+
 function renderExceptionConfig(config) {
   ensureSpecialConfig(config);
-  return `<section class="special-config-panel" id="exceptionConfigPanel" data-annotation-target="exceptionConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">包裹异常标签规则</div></div></div>${renderExceptionTags(config.exceptionTags)}</section>`;
+  return `<section class="special-config-panel" id="exceptionConfigPanel" data-annotation-target="exceptionConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">包裹异常标签规则</div></div><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-tag">添加标签</button></div>${renderExceptionTagDraft()}${renderExceptionTags(config.exceptionTags)}</section>`;
 }
 
 function renderConfigPanel() {
@@ -392,6 +404,33 @@ document.addEventListener('click', (event) => {
     input.value = '';
     renderConfigPanel();
   }
+  if (action === 'add-exception-tag') {
+    draftExceptionTag = { name: '', includeKeywords: [], excludeKeywords: [] };
+    renderConfigPanel();
+  }
+  if (action === 'add-exception-draft-keyword') {
+    const kind = event.target.closest('[data-kind]').dataset.kind;
+    const input = $(`#exceptionDraft${kind === 'include' ? 'Include' : 'Exclude'}`);
+    const value = input?.value.trim();
+    if (!value || !draftExceptionTag) return;
+    draftExceptionTag.name = $('#exceptionDraftName')?.value.trim() || draftExceptionTag.name;
+    draftExceptionTag[`${kind}Keywords`].push(value);
+    input.value = '';
+    renderConfigPanel();
+  }
+  if (action === 'cancel-exception-tag') {
+    draftExceptionTag = null;
+    renderConfigPanel();
+  }
+  if (action === 'save-exception-tag') {
+    const name = $('#exceptionDraftName')?.value.trim();
+    if (!draftExceptionTag || !name) { showToast('请输入标签名称'); return; }
+    if (currentConfig().exceptionTags.some((tag) => tag.name === name)) { showToast('标签名称不能重复'); return; }
+    currentConfig().exceptionTags.push({ id: `custom-${Date.now()}`, name, includeKeywords: [...draftExceptionTag.includeKeywords], excludeKeywords: [...draftExceptionTag.excludeKeywords] });
+    draftExceptionTag = null;
+    renderConfigPanel();
+    showToast('异常标签已添加');
+  }
   if (action === 'remove-keyword') {
     const target = event.target.closest('[data-action="remove-keyword"]');
     const kind = target.dataset.kind;
@@ -404,6 +443,10 @@ document.addEventListener('click', (event) => {
       const index = Number(target.dataset.nodeId);
       const key = kind === 'exception-include' ? 'includeKeywords' : 'excludeKeywords';
       currentConfig().exceptionTags[index][key].splice(Number(target.dataset.index), 1);
+      renderConfigPanel();
+    } else if (kind.startsWith('draft-')) {
+      const key = kind === 'draft-include' ? 'includeKeywords' : 'excludeKeywords';
+      if (draftExceptionTag) draftExceptionTag[key].splice(Number(target.dataset.index), 1);
       renderConfigPanel();
     } else {
       const list = currentConfig().phases[activeConfigTab][kind === 'include' ? 'includeKeywords' : 'excludeKeywords'];
