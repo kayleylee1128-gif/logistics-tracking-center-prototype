@@ -420,7 +420,6 @@ document.addEventListener('click', event => {
   if (action === 'import') showToast('导入窗口已打开（支持物流轨迹模板）');
   if (action === 'remark-batch') showToast('请先勾选包裹，再批量修改采购备注');
   if (action === 'retry') showToast('已提交轨迹重试：' + id);
-  if (action === 'column-setting') showToast('列设置已打开（原型示意）');
   if (action === 'drawer-action') showToast('已打开异常处理任务（原型示意）');
   if (action === 'copy-no') { if (selectedParcel) navigator.clipboard?.writeText(selectedParcel.trackingNo); showToast('运单号已复制'); }
   if (action === 'toggle-more') { const filter = $('.c-filter'); filter.dataset.expanded = filter.dataset.expanded === 'true' ? 'false' : 'true'; event.target.textContent = filter.dataset.expanded === 'true' ? '收起筛选' : '更多筛选'; }
