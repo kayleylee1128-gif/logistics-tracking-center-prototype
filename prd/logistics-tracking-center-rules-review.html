@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>逆向退件轨迹、物流轨迹规则与轨迹中心整合 PRD · 评审稿</title>
+  <style>
+    :root {
+      --ink: #172033; --muted: #667085; --subtle: #98a2b3; --line: #e4e7ec;
+      --panel: #fff; --canvas: #f5f7fa; --blue: #1677ff; --blue-soft: #eaf3ff;
+      --green: #087443; --green-soft: #ecfdf3; --amber: #b54708; --amber-soft: #fffaeb;
+      --red: #b42318; --red-soft: #fef3f2; --purple: #6941c6; --purple-soft: #f4f3ff;
+      --shadow: 0 10px 30px rgba(16, 24, 40, .06); --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); font: 14px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .page { max-width: 1440px; margin: 0 auto; padding: 32px 42px 64px; }
+    .hero { background: linear-gradient(135deg, #0f4c81 0%, #1677ff 56%, #5aa7ff 100%); color: #fff; border-radius: 20px; padding: 34px 38px; box-shadow: var(--shadow); }
+    .eyebrow { margin: 0 0 8px; font-size: 12px; letter-spacing: .12em; opacity: .78; text-transform: uppercase; }
+    h1, h2, h3, h4 { margin: 0; line-height: 1.35; }
+    h1 { font-size: 30px; letter-spacing: -.02em; }
+    .hero p { max-width: 900px; margin: 12px 0 0; color: rgba(255,255,255,.86); font-size: 15px; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+    .pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 10px; font-size: 12px; background: rgba(255,255,255,.16); color: #fff; }
+    .toc { position: sticky; top: 12px; z-index: 5; display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0; padding: 10px; background: rgba(255,255,255,.92); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 14px rgba(16,24,40,.04); backdrop-filter: blur(10px); }
+    .toc a { padding: 5px 9px; border-radius: 7px; color: var(--muted); font-size: 12px; }
+    .toc a:hover { background: var(--blue-soft); color: var(--blue); text-decoration: none; }
+    .section { margin-top: 18px; padding: 28px 30px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    h2 { padding-bottom: 12px; border-bottom: 1px solid var(--line); font-size: 22px; }
+    h3 { margin: 24px 0 10px; font-size: 17px; }
+    h4 { margin: 16px 0 8px; font-size: 14px; color: #344054; }
+    p { margin: 8px 0; }
+    .lead { margin-top: 16px; color: #344054; font-size: 15px; }
+    .note, .decision, .warning { margin: 14px 0; padding: 13px 16px; border-left: 4px solid var(--blue); border-radius: 8px; background: var(--blue-soft); }
+    .decision { border-left-color: var(--green); background: var(--green-soft); }
+    .warning { border-left-color: var(--amber); background: var(--amber-soft); }
+    .danger { border-left-color: var(--red); background: var(--red-soft); }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+    .card { padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+    .card h4 { margin-top: 0; }
+    .tag { display: inline-block; margin: 2px 4px 2px 0; padding: 1px 7px; border-radius: 999px; background: #f2f4f7; color: #475467; font-size: 12px; }
+    .tag.p0 { background: var(--red-soft); color: var(--red); } .tag.p1 { background: var(--amber-soft); color: var(--amber); }
+    .tag.green { background: var(--green-soft); color: var(--green); } .tag.purple { background: var(--purple-soft); color: var(--purple); }
+    .table-wrap { overflow-x: auto; margin-top: 12px; border: 1px solid var(--line); border-radius: 9px; }
+    table { width: 100%; min-width: 760px; border-collapse: collapse; background: #fff; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #f8fafc; color: #475467; font-weight: 600; white-space: nowrap; }
+    tr:last-child td { border-bottom: 0; }
+    code { padding: 1px 5px; border-radius: 4px; background: #f2f4f7; color: #344054; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    ul, ol { margin: 8px 0 8px 20px; padding: 0; }
+    li { margin: 4px 0; }
+    .flow { overflow-x: auto; margin: 14px 0; padding: 18px; border-radius: 10px; background: #101828; color: #d1e9ff; font: 12px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; }
+    .req-id { color: var(--blue); font-weight: 700; white-space: nowrap; }
+    .small { color: var(--muted); font-size: 12px; }
+    .source-url { display: block; overflow-wrap: anywhere; word-break: break-word; font-size: 11px; line-height: 1.5; }
+    .evidence { margin: 16px 0 22px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: #f8fafc; }
+    .evidence img { display: block; width: 100%; height: auto; border-radius: 8px; }
+    .evidence figcaption { margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .footer { margin-top: 24px; color: var(--muted); text-align: center; font-size: 12px; }
+    @media (max-width: 860px) { .page { padding: 16px 12px 40px; } .hero { padding: 25px 22px; } h1 { font-size: 24px; } .section { padding: 20px 17px; } .grid { grid-template-columns: 1fr; } .toc { position: static; } }
+    @media print { body { background: #fff; } .page { max-width: none; padding: 0; } .hero { color: #000; background: #fff; border: 2px solid #0f4c81; box-shadow: none; } .hero p, .pill { color: #344054; } .pill { border: 1px solid var(--line); background: #fff; } .toc { position: static; box-shadow: none; } .section { break-inside: avoid; box-shadow: none; } a { color: #000; text-decoration: underline; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <p class="eyebrow">ERP · Logistics Product Requirement</p>
+      <h1>逆向退件轨迹、物流轨迹规则与轨迹中心整合需求文档</h1>
+      <p>以退款订单中的退件物流单号为触发入口，拉取平台逆向物流轨迹，再通过物流商/渠道规则按关键词识别和清洗标准节点，并在退款订单列表与物流轨迹中心统一展示。</p>
+      <div class="hero-meta"><span class="pill">评审稿</span><span class="pill">版本 V2.0</span><span class="pill">评审日期：2026-09-02</span><span class="pill">目标系统：跨境电商 ERP</span><span class="pill">优先级：P0 + P1</span></div>
+    </header>
+
+    <nav class="toc" aria-label="文档目录">
+      <a href="#prototypes">原型页面</a><a href="#summary">1. 结论与范围</a><a href="#comparison">2. 原型对照</a><a href="#users">3. 用户与场景</a><a href="#flow">4. 业务流程</a><a href="#pull">5. 物流轨迹拉取</a><a href="#center">6. 轨迹中心</a><a href="#rules">7. 规则配置</a><a href="#model">8. 数据与算法</a><a href="#quality">9. 权限与质量</a><a href="#acceptance">10. 验收标准</a><a href="#milestone">11. 里程碑与问题</a>
+    </nav>
+
+    <main>
+      <section class="section" id="prototypes">
+        <h2>原型页面</h2>
+        <div class="table-wrap"><table><thead><tr><th>页面</th><th>原型链接</th><th>本 PRD 对应章节</th><th>使用说明</th></tr></thead><tbody>
+          <tr><td>物流轨迹中心</td><td><a class="source-url" href="https://kayleylee1128-gif.github.io/logistics-tracking-center-prototype/" target="_blank" rel="noreferrer">https://kayleylee1128-gif.github.io/logistics-tracking-center-prototype/</a></td><td>第 2、5、6、8、10 章。</td><td>作为全新独立页面建设，参考方向切换、查询区、状态 Tab、正逆向表格和详情抽屉。</td></tr>
+          <tr><td>物流轨迹规则</td><td><a class="source-url" href="https://kayleylee1128-gif.github.io/logistics-tracking-center-prototype/prototype/logistics-rules/index.html" target="_blank" rel="noreferrer">https://kayleylee1128-gif.github.io/logistics-tracking-center-prototype/prototype/logistics-rules/index.html</a></td><td>第 2、4、7、8、10 章。</td><td>参考规则列表、节点页签、关键词/排除词、退回和异常配置；原型标注不属于业务功能。</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="section" id="summary">
+        <h2>1. 结论与范围</h2>
+        <p class="lead">本次建设包含两个职责清晰的页面：全新独立开发的“物流轨迹中心”负责轨迹查询和异常处置，“物流轨迹规则”负责识别配置；两者通过渠道规则、标准节点和规则版本关联。</p>
+        <div class="decision"><strong>评审结论建议：</strong>以物流渠道为最小规则生效单元；规则保存后只影响后续同步和后续识别，不回溯已落库的历史结果；正向与逆向使用同一包裹详情上下文，但状态、字段和规则独立维护。</div>
+        <div class="table-wrap"><table><thead><tr><th>项目</th><th>本期结论</th><th>依据 / 备注</th></tr></thead><tbody>
+          <tr><td>建设目标</td><td>把承运商原始轨迹转换为可查询、可统计、可处置的标准物流节点。</td><td>两个原型共同体现：规则配置是数据基础，轨迹中心是使用场景。</td></tr>
+          <tr><td>本期范围</td><td>退款订单筛选触发逆向拉取、平台适配、原始轨迹落库、关键词识别清洗、退款订单物流单号轨迹弹窗/抽屉；以及规则 CRUD、节点取值、关键词/排除词、异常标签、预警天数、轨迹中心查询与监控。</td><td><span class="tag p0">P0</span> 逆向拉取与节点识别闭环；<span class="tag p1">P1</span> 规则版本、测试、任务治理增强。</td></tr>
+          <tr><td>新增硬性触发条件</td><td>订单系统 → 退款订单列表：退款状态 = “商品退回中” 且退件物流单号不为空。</td><td>满足条件的数据必须进入逆向轨迹拉取队列；不满足条件不得调用平台逆向接口。</td></tr>
+          <tr><td>不在本期</td><td>承运商采集算法重写、自动退款/赔付/补发、退件入库和质检流程、独立报表中心；TikTok 逆向接口暂不实现。</td><td>相关操作通过任务或业务单据跳转，不在轨迹页面内完成；TikTok 显示待接入，不得伪造成功。</td></tr>
+          <tr><td>原型数据口径</td><td>数量、时间、单号、Mock Toast 和示例规则仅用于演示，不可作为上线验收数据。</td><td>上线前必须接入真实接口并以服务端统计为准。</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="section" id="comparison">
+        <h2>2. 两个原型对照与建设边界</h2>
+        <div class="table-wrap"><table><thead><tr><th>维度</th><th>物流轨迹中心</th><th>物流轨迹规则</th><th>改造后系统要求</th></tr></thead><tbody>
+          <tr><td>定位</td><td>面向运营、客服、仓储的包裹监控和异常定位。</td><td>面向物流运营/管理员的渠道识别规则维护。</td><td>形成“配置 → 同步识别 → 监控处置”的闭环，页面间可追溯跳转。</td></tr>
+          <tr><td>核心对象</td><td>包裹、平台单号、包裹号、物流单号、跟踪号、轨迹事件。</td><td>物流商、物流渠道、映射单号、标准节点、异常标签、规则版本。</td><td>定义唯一关联键：物流商 + 物流渠道 + 规则版本；包裹保存命中的规则版本。</td></tr>
+          <tr><td>状态模型</td><td>正向：未上网、已上网、已交航、已到达目的国、已签收、异常、退回；逆向：退回中、已签收、异常。</td><td>揽收、上网、交航、到达目的国、签收，以及退回和异常的取值规则。</td><td>建立标准节点编码和状态优先级，显示名称可配置但编码不可随意变化。</td></tr>
+          <tr><td>现有交互</td><td>筛选、状态 Tab、动态列表、抽屉详情、同步、导出、备注、重试。</td><td>筛选、添加/编辑/复制/删除、规则弹窗、关键词增删、标注抽屉。</td><td>保留用户已熟悉的查询和 CRUD；补齐校验、生效、测试、审计和失败反馈。</td></tr>
+          <tr><td>原型缺口</td><td>服务端分页/统计、真实同步状态、任务进度、异常任务闭环、数据权限未落地；未覆盖退款订单触发入口。</td><td>规则唯一性、冲突优先级、版本回滚、发布审批、测试样例、并发编辑未落地。</td><td>补充逆向采集任务、平台适配、退款订单联动和拉取失败处理。</td></tr>
+        </tbody></table></div>
+        <div class="note"><strong>评审边界：</strong>规则页面右侧“原型标注”面板及页面上的标注按钮只用于评审定位，不是业务功能；研发实现不得把标注内容、标注开关或标注数量带入生产页面。</div>
+      </section>
+
+      <section class="section" id="users">
+        <h2>3. 用户与核心场景</h2>
+        <div class="table-wrap"><table><thead><tr><th>角色</th><th>任务</th><th>主要页面</th><th>关键成功标准</th><th>权限建议</th></tr></thead><tbody>
+          <tr><td>物流运营</td><td>查看全量包裹、定位渠道异常、触发同步重试。</td><td>轨迹中心</td><td>可按状态/渠道快速缩小范围，知道异常原因和下一步。</td><td>查看、同步、重试、导出、备注。</td></tr>
+          <tr><td>客服</td><td>按平台单号/包裹号查询并向客户解释轨迹。</td><td>轨迹中心</td><td>详情中能看到标准节点、原始描述和节点时间。</td><td>查看、复制单号、导出（按授权）。</td></tr>
+          <tr><td>规则管理员</td><td>新增渠道规则，维护节点关键词和异常标签。</td><td>物流轨迹规则</td><td>保存前能发现重复、空规则、冲突关键词，生效范围清晰。</td><td>规则新增、编辑、复制、启停、测试。</td></tr>
+          <tr><td>仓储/退件处理人</td><td>查看逆向退回节点、签收和破损丢件。</td><td>轨迹中心</td><td>正向与逆向轨迹可在同一包裹详情切换。</td><td>查看逆向、备注、处理任务。</td></tr>
+          <tr><td>售后/退款处理人</td><td>在退款订单列表确认退件进度，查看退件物流轨迹。</td><td>退款订单列表 + 轨迹中心</td><td>商品退回中且有退件物流单号的订单，点击物流单号即可查看最新逆向轨迹。</td><td>查看退款订单、查看轨迹、复制单号。</td></tr>
+          <tr><td>管理员/审计</td><td>复核规则变化、导出记录、追踪异常操作。</td><td>规则页 + 审计日志</td><td>按操作者、时间、规则版本还原变更前后内容。</td><td>全量查看、审计、审批。</td></tr>
+        </tbody></table></div>
+        <h3>3.1 高频用户路径</h3>
+        <ol><li>规则管理员进入“物流轨迹规则”，筛选物流商/渠道，新增或编辑规则，运行样例测试后保存并启用。</li><li>退款订单列表筛选出状态为“商品退回中”且退件物流单号不为空的订单，系统按平台适配器拉取逆向轨迹。</li><li>系统按已启用规则解析承运商事件，写入标准节点、异常类型、命中规则版本和识别日志。</li><li>售后处理人可在退款订单列表点击退件物流单号查看轨迹；物流运营也可在“物流轨迹中心”按逆向方向查询和处置。</li><li>若为同步失败或业务异常，用户执行重试、添加备注或创建处理任务；任务结果可回到订单或包裹详情查看。</li></ol>
+      </section>
+
+
+      <section class="section" id="flow">
+        <h2>4. 业务流程与状态模型</h2>
+        <h3>4.1 端到端流程</h3>
+        <pre class="flow">物流商原始事件
+      │
+      ▼
+物流渠道匹配 ── 无启用规则 ──▶ 保留原文 + 未识别状态 + 监控告警
+      │
+      ▼
+规则版本解析：标准节点 / 异常标签 / 预警天数 / 命中事件
+      │
+      ▼
+包裹轨迹快照 + 原始事件 + 命中规则版本 + 解析日志
+      │
+      ├── 正向：揽收 → 上网 → 交航 → 到达目的国 → 签收
+      ├── 逆向：退回中 → 退回签收 → 待入库/后续处理
+      └── 异常：清关 / 查不到轨迹 / 派送失败 / 丢件 / 破损 / 同步失败
+      │
+      ▼
+物流轨迹中心查询、详情、重试、备注、导出、处理任务</pre>
+        <h3>4.2 标准节点和状态优先级</h3>
+        <div class="table-wrap"><table><thead><tr><th>编码</th><th>展示名称</th><th>方向</th><th>终态</th><th>说明</th></tr></thead><tbody>
+          <tr><td><code>COLLECTED</code></td><td>已揽收</td><td>正向</td><td>否</td><td>承运商已接收包裹；规则页已有揽收取值设置。</td></tr>
+          <tr><td><code>ONLINE</code></td><td>已上网</td><td>正向</td><td>否</td><td>已出现有效运输网络扫描。</td></tr>
+          <tr><td><code>HANDOVER</code></td><td>已交航</td><td>正向</td><td>否</td><td>已进入国际干线/航班阶段。</td></tr>
+          <tr><td><code>ARRIVED_DEST</code></td><td>已到达目的国</td><td>正向</td><td>否</td><td>到达目的国或进口处理中心。</td></tr>
+          <tr><td><code>SIGNED</code></td><td>已签收</td><td>正向/逆向</td><td>是</td><td>正向为买家签收；逆向为退件仓签收，需要区分事件主体。</td></tr>
+          <tr><td><code>RETURNING</code></td><td>退回中</td><td>正向/逆向</td><td>否</td><td>原包裹退回或客户退回运输中。</td></tr>
+          <tr><td><code>RETURN_RECEIVED</code></td><td>退回签收</td><td>逆向/正向退回</td><td>是</td><td>退件仓已签收退回包裹。</td></tr>
+          <tr><td><code>EXCEPTION</code></td><td>包裹异常</td><td>正向/逆向</td><td>否</td><td>由异常标签规则命中；系统同步失败单独保留系统错误码。</td></tr>
+        </tbody></table></div>
+        <div class="warning"><strong>状态冲突处理：</strong>同一包裹同时命中正常节点和异常标签时，列表状态展示异常，但保留已达成的正常节点时间；异常解除后不可自动篡改历史事件，只更新当前快照和处理状态。</div>
+      </section>
+
+      <section class="section" id="pull">
+        <h2>5. 物流轨迹拉取</h2>
+        <p class="lead">本章只约束业务触发条件、输入输出、处理顺序和页面结果，不指定队列、调度、存储、缓存、重试框架或服务拆分方案；具体技术实现由研发结合现有平台能力设计并在技术方案中落地。</p>
+        <h3>5.1 退款订单触发逆向物流拉取</h3>
+        <figure class="evidence">
+          <img src="./assets/logistics-tracking-center/refund-order-list-status.png" alt="退款订单列表中商品退回中的订单状态截图" />
+          <figcaption>图 1：退款订单列表中“商品退回中”状态入口。满足退款状态与退件物流单号条件后，进入逆向物流拉取链路。</figcaption>
+        </figure>
+        <div class="table-wrap"><table><thead><tr><th>步骤</th><th>触发条件 / 动作</th></tr></thead><tbody>
+          <tr><td>1. 订单筛选</td><td>订单系统退款订单列表中，退款状态 = “商品退回中”，且退件物流单号非空。</td></tr>
+          <tr><td>2. 平台路由</td><td>读取订单平台和退件物流单号。</td></tr>
+          <tr><td>3. 轨迹拉取</td><td>按平台接口查询逆向退件轨迹。</td></tr>
+          <tr><td>4. 清洗识别</td><td>轨迹事件入库后触发对应物流商+渠道规则。</td></tr>
+          <tr><td>5. 页面联动</td><td>用户在退款订单列表点击退件物流单号。</td></tr>
+        </tbody></table></div>
+        <div class="decision"><strong>幂等要求：</strong>同一退款单 + 退件物流单号 + 平台 + 查询时间窗只允许一个运行中任务；重复触发应复用任务或返回已存在任务，不得重复写入同一轨迹事件。</div>
+
+<h3>5.2 退款订单列表联动</h3>
+        <div class="table-wrap"><table><thead><tr><th>需求编号</th><th>入口</th><th>交互要求</th><th>数据和异常要求</th></tr></thead><tbody>
+          <tr><td class="req-id">RO-001</td><td>订单系统 → 退款订单列表 → 退件物流单号</td><td>仅当退款状态为“商品退回中”且退件物流单号有值时，物流单号展示为可点击链接/按钮；点击打开逆向轨迹信息。</td><td>携带退款单 ID、订单 ID、平台、店铺、退件物流单号；没有单号时展示“暂无退件物流单号”，不可发起拉取。</td></tr>
+          <tr><td class="req-id">RO-002</td><td>首次点击 / 后台任务</td><td>点击时优先读取已落库快照；无数据或已过刷新周期时提示“正在获取轨迹”，不阻塞退款订单列表。</td><td>页面展示拉取中、成功、部分成功、失败、待接入五种结果；失败可从详情重试，不能改变退款订单状态。</td></tr>
+          <tr><td class="req-id">RO-003</td><td>轨迹信息窗口</td><td>默认进入逆向轨迹 Tab，展示退回申请、退回运输、退件仓签收、异常节点和原始承运商描述；支持复制退件物流单号。</td><td>轨迹按事件时间倒序；每个标准节点显示命中规则版本；原始事件不可被关键词清洗覆盖。</td></tr>
+          <tr><td class="req-id">RO-004</td><td>订单与中心一致性</td><td>从退款订单打开的轨迹与物流轨迹中心按同一退件物流单号查询，结果和更新时间一致。</td><td>若订单已重新生成退件物流单号，旧单号轨迹只读保留，新单号重新建立拉取任务。</td></tr>
+        </tbody></table></div>
+
+<h3>5.3 平台接口适配矩阵</h3>
+        <div class="table-wrap"><table><thead><tr><th>平台</th><th>逆向拉取接口 / 依据</th><th>正逆向关系</th><th>P0 实现要求</th></tr></thead><tbody>
+          <tr><td>Shopee</td><td><a class="source-url" href="https://open.shopee.com/documents/v2/v2.returns.get_reverse_tracking_info?module=102&amp;type=1" target="_blank" rel="noreferrer">https://open.shopee.com/documents/v2/v2.returns.get_reverse_tracking_info?module=102&amp;type=1</a></td><td>逆向独立接口。</td><td>按退件物流单号拉取，落库原始轨迹并转标准事件。</td></tr>
+          <tr><td>TikTok</td><td>暂无接口。</td><td>暂不接入。</td><td>退款订单标记“待接入”，不创建假成功轨迹；支持后续适配器扩展。</td></tr>
+          <tr><td>SMT</td><td><a class="source-url" href="https://open.aliexpress.com/doc/api.htm?spm=a2o9m.11193531.0.0.72d83b53tcVEcE&amp;cid=20892&amp;path=aliexpress.logistics.redefining.querytrackingresult&amp;methodType=GET%2FPOST" target="_blank" rel="noreferrer">https://open.aliexpress.com/doc/api.htm?spm=a2o9m.11193531.0.0.72d83b53tcVEcE&amp;cid=20892&amp;path=aliexpress.logistics.redefining.querytrackingresult&amp;methodType=GET%2FPOST</a></td><td>用户说明与正向物流一致。</td><td>复用正向轨迹适配器，以退件物流单号和逆向方向查询。</td></tr>
+          <tr><td>Lazada</td><td><a class="source-url" href="https://open.lazada.com/apps/doc/api?path=%2Freverse%2Fgetreverseordersforseller" target="_blank" rel="noreferrer">https://open.lazada.com/apps/doc/api?path=%2Freverse%2Fgetreverseordersforseller</a></td><td>先获取退件订单/运单信息，轨迹详情能力需确认。</td><td>先同步退件订单，再用可用运单轨迹能力获取事件。</td></tr>
+          <tr><td>淘宝 / 天猫</td><td><a class="source-url" href="https://open.taobao.com/api.htm?spm=a219a.7386797.0.0.5ad1669aNYLUos&amp;source=search&amp;docId=73647&amp;docType=2" target="_blank" rel="noreferrer">https://open.taobao.com/api.htm?spm=a219a.7386797.0.0.5ad1669aNYLUos&amp;source=search&amp;docId=73647&amp;docType=2</a><a class="source-url" href="https://open.taobao.com/api.htm?spm=a219a.7386797.0.0.5ad1669aNYLUos&amp;source=search&amp;docId=73315&amp;docType=2" target="_blank" rel="noreferrer">https://open.taobao.com/api.htm?spm=a219a.7386797.0.0.5ad1669aNYLUos&amp;source=search&amp;docId=73315&amp;docType=2</a></td><td>正逆向接口分开。</td><td>分别适配，统一转换为退款单、退件运单和轨迹事件。</td></tr>
+          <tr><td>拼多多</td><td><a class="source-url" href="https://open.pinduoduo.com/application/document/api?id=pdd.refund.list.increment.get" target="_blank" rel="noreferrer">https://open.pinduoduo.com/application/document/api?id=pdd.refund.list.increment.get</a><a class="source-url" href="https://open.pinduoduo.com/application/document/api?id=pdd.refund.information.get" target="_blank" rel="noreferrer">https://open.pinduoduo.com/application/document/api?id=pdd.refund.information.get</a><a class="source-url" href="https://open.pinduoduo.com/application/document/api?id=pdd.logistics.ordertrace.get" target="_blank" rel="noreferrer">https://open.pinduoduo.com/application/document/api?id=pdd.logistics.ordertrace.get</a></td><td>正逆向共用物流轨迹接口；另有轨迹消息订阅。</td><td>退款列表补偿 + 详情补全 + 轨迹查询；接入消息订阅后做实时更新。</td></tr>
+          <tr><td>京东</td><td><a class="source-url" href="https://open.jd.com/v2/#/doc/api?apiCateId=200379&amp;apiId=100246&amp;apiName=listAfsOrders&amp;gwType=1" target="_blank" rel="noreferrer">https://open.jd.com/v2/#/doc/api?apiCateId=200379&amp;apiId=100246&amp;apiName=listAfsOrders&amp;gwType=1</a><a class="source-url" href="https://open.jd.com/v2/#/doc/api?apiCateId=200379&amp;apiId=100237&amp;apiName=getAfsOrder&amp;gwType=1" target="_blank" rel="noreferrer">https://open.jd.com/v2/#/doc/api?apiCateId=200379&amp;apiId=100237&amp;apiName=getAfsOrder&amp;gwType=1</a><a class="source-url" href="https://open.jd.com/v2/#/doc/api?apiCateId=200356&amp;apiId=100458&amp;apiName=listWaybillTraces&amp;gwType=1" target="_blank" rel="noreferrer">https://open.jd.com/v2/#/doc/api?apiCateId=200356&amp;apiId=100458&amp;apiName=listWaybillTraces&amp;gwType=1</a></td><td>先退件/售后，再查正逆向运单轨迹。</td><td>建立售后单与运单多对一/一对多关联，按运单去重事件。</td></tr>
+          <tr><td>eBay</td><td><a class="source-url" href="https://developer.ebay.com/develop/api/sell/fulfillment_api#sell-fulfillment_api-shipping_fulfillment-getshippingfulfillment-oauth-scope" target="_blank" rel="noreferrer">https://developer.ebay.com/develop/api/sell/fulfillment_api#sell-fulfillment_api-shipping_fulfillment-getshippingfulfillment-oauth-scope</a></td><td>履约、订单和退货对象分层。</td><td>按订单/履约/包裹对象适配，查询可用的 shipping fulfillment 或 return tracking 信息。</td></tr>
+        </tbody></table></div>
+        <div class="note"><strong>接口说明：</strong>以上平台链接为需求输入和研发联调依据，参数及权限以实际联调结果为准。</div>
+
+      </section>
+
+      <section class="section" id="center">
+        <h2>6. 物流轨迹中心需求</h2>
+        <p class="lead">本页面为全新独立开发的“物流轨迹中心”页面，使用独立路由、独立查询模型和独立页面布局；不在原有物流轨迹页面上做增量改造，也不复用原页面的布局和交互代码。</p>
+        <h3>6.1 页面结构与查询</h3>
+        <div class="table-wrap"><table><thead><tr><th>需求编号</th><th>优先级</th><th>需求</th><th>规则与验收口径</th></tr></thead><tbody>
+          <tr><td class="req-id">TC-001</td><td><span class="tag p0">P0</span></td><td>独立页面与方向切换</td><td>新建独立页面并提供正向物流/逆向物流切换；切换后状态 Tab、二级筛选、表头、数据总数和详情上下文同步切换；保留公共筛选条件，清空不适用的方向筛选。</td></tr>
+          <tr><td class="req-id">TC-002</td><td><span class="tag p0">P0</span></td><td>公共查询条件</td><td>支持仓库、平台、目的国家、物流商、物流渠道、单号类型+关键词、时间范围；查询按服务端分页，回车可触发查询，重置恢复默认值。</td></tr>
+          <tr><td class="req-id">TC-003</td><td><span class="tag p0">P0</span></td><td>状态统计</td><td>状态数量由服务端按当前方向和查询条件返回；切换 Tab 不从当前页数据推算；统计加载失败时展示“统计暂不可用”，不可显示伪造 0。</td></tr>
+          <tr><td class="req-id">TC-004</td><td><span class="tag p0">P0</span></td><td>异常二级筛选</td><td>正向异常支持查不到轨迹、派送失败、丢件、破损、轨迹同步失败；退回支持退回类型和退回节点；筛选条件与 URL/查询请求可还原。</td></tr>
+          <tr><td class="req-id">TC-005</td><td><span class="tag p0">P0</span></td><td>列表字段</td><td>按新页面固定字段定义展示仓库、平台、物流商、渠道、国家、平台单号、包裹号、物流单号、跟踪号、当前节点、最新轨迹、各节点时间、签收时效、备注、操作；逆向切换为退回类型/节点/异常/退回与签收时间等字段。字段顺序固定，不提供本期列设置入口。</td></tr>
+          <tr><td class="req-id">TC-006</td><td><span class="tag p1">P1</span></td><td>同步与重试</td><td>同步轨迹创建异步任务并展示任务编号、提交时间、进度和结果；仅同步失败或有权限的异常记录显示重试；重复点击需幂等。</td></tr>
+          <tr><td class="req-id">TC-007</td><td><span class="tag p1">P1</span></td><td>导入、导出、备注</td><td>导入校验模板、文件大小、最大行数和单号格式；导出支持当前条件/选中数据，生成任务并可下载失败明细；备注支持单条和批量，长度上限 300 字并记录审计。</td></tr>
+        </tbody></table></div>
+        <h3>6.2 详情抽屉</h3>
+        <div class="table-wrap"><table><thead><tr><th>区域</th><th>内容</th><th>交互</th><th>异常处理</th></tr></thead><tbody>
+          <tr><td>抽屉头部</td><td>包裹号/平台单号、物流方向、当前状态、异常标签。</td><td>关闭、复制平台单号/物流单号/跟踪号。</td><td>复制失败时显示可选中文本，不阻断详情浏览。</td></tr>
+          <tr><td>正向轨迹 Tab</td><td>标准节点时间、节点名称、地点、承运商原文、命中规则版本。</td><td>按时间倒序展示，最新节点高亮；可展开原始事件。</td><td>无轨迹时提示同步状态和最近同步时间。</td></tr>
+          <tr><td>逆向轨迹 Tab</td><td>退回申请、退回运输、退回签收、退件仓处理关联信息。</td><td>无逆向轨迹时说明“尚未产生逆向轨迹”，不展示空白页。</td><td>关联缺失时显示关联单号和数据异常提示。</td></tr>
+          <tr><td>包裹信息 Tab</td><td>仓库、平台、国家、渠道、规则版本、异常原因、备注、同步日志摘要。</td><td>备注可编辑；异常可创建/跳转处理任务。</td><td>无权限时字段只读，敏感字段脱敏。</td></tr>
+        </tbody></table></div>
+              </section>
+
+      <section class="section" id="rules">
+        <h2>7. 物流轨迹规则需求</h2>
+        <h3>7.1 规则列表</h3>
+        <div class="table-wrap"><table><thead><tr><th>需求编号</th><th>优先级</th><th>需求</th><th>规则与验收口径</th></tr></thead><tbody>
+          <tr><td class="req-id">TR-003</td><td><span class="tag p0">P0</span></td><td>揽收取值设置</td><td>新增“揽收取值设置”页签，页面结构和交互与“上网取值设置”一致；支持按第 N 条轨迹或按关键词判断，关键词支持命中词和排除词，排除词优先。</td></tr>
+          <tr><td class="req-id">TR-004</td><td><span class="tag p0">P0</span></td><td>退回取值设置</td><td>新增“退回取值设置”页签，按退回中、退回签收配置命中词和排除词，并区分原包裹退回、客户退回。</td></tr>
+          <tr><td class="req-id">TR-005</td><td><span class="tag p0">P0</span></td><td>包裹异常设置</td><td>新增“包裹异常设置”页签，维护派送失败、查不到轨迹、丢件、破损等异常标签及其命中词、排除词；多个标签命中时按优先级确定主标签。</td></tr>
+          <tr><td class="req-id">TR-007</td><td><span class="tag p1">P1</span></td><td>规则测试</td><td>提供输入承运商原文、事件时间和事件类型的测试区，返回命中节点、排除原因、异常标签、规则版本和解释链；测试不改变线上数据。</td></tr>
+        </tbody></table></div>
+        <h3>7.2 规则编辑器字段</h3>
+        <div class="table-wrap"><table><thead><tr><th>分组</th><th>字段</th><th>类型 / 必填</th><th>说明</th></tr></thead><tbody>
+          <tr><td>基础信息</td><td>物流商、物流渠道、映射单号</td><td>枚举 / 必填</td><td>物流渠道下拉值随物流商联动；映射单号用于决定查询结果写入哪个业务单号字段。</td></tr>
+          <tr><td>规则状态</td><td>查询状态</td><td>开关 / 必填</td><td>启用后参与新事件识别；停用不删除历史命中记录。</td></tr>
+          <tr><td>节点取值设置</td><td>揽收、上网、交航、到达目的国、签收</td><td>规则对象 / 至少一项</td><td>揽收与上网均支持按第 N 条轨迹或按关键词；交航、到达目的国、签收沿用同一取值结构。</td></tr>
+          <tr><td>退回取值设置</td><td>退回中、退回签收、退回类型</td><td>规则对象 / 条件必填</td><td>配置命中词和排除词，区分原包裹退回与客户退回。</td></tr>
+          <tr><td>包裹异常设置</td><td>异常标签、命中关键词、排除关键词、优先级</td><td>数组 / 标签名必填</td><td>维护派送失败、查不到轨迹、丢件、破损等标签；系统同步失败使用系统错误码单独归类。</td></tr>
+          <tr><td>预警</td><td>各节点预警天数</td><td>整数 / 可选</td><td>以交运时间为起点计算；未设置表示不产生该节点时效预警。</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="section" id="model">
+        <h2>8. 数据模型与识别算法</h2>
+        <h3>8.1 核心数据对象</h3>
+        <div class="table-wrap"><table><thead><tr><th>对象</th><th>关键字段</th><th>用途</th><th>保留策略</th></tr></thead><tbody>
+          <tr><td>退款订单 RefundOrder</td><td>refundId、orderId、platform、shopId、refundStatus、returnTrackingNos、updatedAt</td><td>筛选“商品退回中”订单并触发逆向拉取，承载订单侧查看入口。</td><td>订单状态来自订单系统；退件运单号变化时建立新关联，不覆盖旧运单轨迹。</td></tr>
+          <tr><td>退件运单 ReturnShipment</td><td>shipmentId、refundId、trackingNo、carrier、channel、pullStatus、lastPulledAt</td><td>将一个退款单与一个或多个退件物流单号关联。</td><td>运单号不可复用；平台响应和拉取任务按运单维度幂等。</td></tr>
+          <tr><td>渠道规则 Rule</td><td>ruleId、carrierId、channelId、mappingNo、enabled、version、effectiveAt、operator</td><td>定位当前和历史规则。</td><td>版本不可覆盖；启停和编辑生成审计。</td></tr>
+          <tr><td>节点配置 NodeRule</td><td>nodeCode、mode、selectedCount、includeKeywords、excludeKeywords、warningDays</td><td>识别标准节点与预警。</td><td>随 Rule 版本快照保存。</td></tr>
+          <tr><td>异常标签 ExceptionRule</td><td>tagCode、name、priority、includeKeywords、excludeKeywords</td><td>识别业务异常。</td><td>规则版本快照保存；支持多标签命中记录。</td></tr>
+          <tr><td>轨迹事件 Event</td><td>eventId、packageId、eventTime、rawStatus、rawDescription、location、source</td><td>原始承运商事件。</td><td>原文不可篡改；允许补充标准化字段。</td></tr>
+          <tr><td>识别结果 Snapshot</td><td>packageId、direction、currentNode、exceptionCodes、nodeTimes、ruleVersion</td><td>列表和状态统计读取。</td><td>可重算当前快照，但保留每次解析日志。</td></tr>
+          <tr><td>解析日志 ParseLog</td><td>packageId、eventId、ruleVersion、matches、exclusions、result、createdAt</td><td>解释“为什么命中/未命中”。</td><td>至少保留业务审计周期，具体周期待确认。</td></tr>
+        </tbody></table></div>
+        <h3>8.2 识别规则</h3>
+        <ol><li>按物流商 + 物流渠道匹配启用规则；没有精确渠道规则时，默认<strong>不自动套用其他渠道规则</strong>，标记为“未配置规则”，避免误识别。</li><li>对原始状态和描述做统一化处理：去除首尾空格、统一大小写、兼容中英文标点；原始文本保留原样。</li><li>keyword 模式：事件命中任一命中词且不命中任一排除词，才算有效命中；排除词优先于命中词。</li><li>count 模式：按事件时间升序取第 N 条有效轨迹作为节点事件；N 不合法或事件不足时不生成该节点。</li><li>同一节点多条命中事件，节点时间取最早命中事件；当前状态取时间线上最后达成的正常节点。</li><li>异常标签独立计算；多个异常按 priority 升序取主标签，同时保存全部命中标签和解释。</li><li>系统异常（接口超时、响应非法、同步任务失败）由系统错误码生成，不依赖物流商关键词；可重试且必须幂等。</li></ol>
+        <pre class="flow">事件原文 → 文本标准化 → 规则匹配 → 排除词判断 → 节点/异常候选
+                                             │
+                          ┌──────────────────┴──────────────────┐
+                          ▼                                     ▼
+                    记录命中解释                         更新包裹快照
+                          │                                     │
+                          └──────────────→ 状态统计 / 详情 / 预警</pre>
+        <div class="warning"><strong>待确认的默认策略：</strong>本稿建议无渠道规则时“不识别、不继承相邻渠道规则”。如业务确认存在物流商级默认规则，需要在数据模型中增加规则作用域和明确优先级：渠道规则 &gt; 物流商默认规则 &gt; 系统默认规则。</div>
+              </section>
+
+      <section class="section" id="quality">
+        <h2>9. 权限、审计、性能与异常</h2>
+        <h3>9.1 权限矩阵</h3>
+        <div class="table-wrap"><table><thead><tr><th>能力</th><th>查看人</th><th>物流运营</th><th>规则管理员</th><th>管理员/审计</th></tr></thead><tbody>
+          <tr><td>查看轨迹中心</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr><tr><td>同步/重试</td><td>—</td><td>✓</td><td>按授权</td><td>✓</td></tr><tr><td>导出</td><td>按数据权限</td><td>✓</td><td>✓</td><td>✓</td></tr><tr><td>查看规则</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr><tr><td>新增/编辑/复制规则</td><td>—</td><td>—</td><td>✓</td><td>按授权</td></tr><tr><td>启停/删除/发布规则</td><td>—</td><td>—</td><td>按审批</td><td>✓</td></tr><tr><td>查看审计日志</td><td>—</td><td>—</td><td>本人操作</td><td>✓</td></tr>
+        </tbody></table></div>
+        <h3>9.2 审计与可观测性</h3>
+        <ul><li>规则变更记录：操作者、时间、规则 ID、版本、变更前后 JSON 摘要、生效动作、审批人、原因。</li><li>轨迹操作记录：查询条件摘要、导出任务、同步/重试任务、备注变更、处理任务跳转。</li><li>解析指标：规则命中率、未配置规则量、未识别事件量、异常标签命中量、同步失败率、重试成功率、解析耗时 P95。</li><li>日志禁止记录完整敏感客户信息；平台单号、跟踪号按权限脱敏，导出文件继承数据权限。</li></ul>
+        <h3>9.3 性能与异常要求</h3>
+        <div class="table-wrap"><table><thead><tr><th>场景</th><th>目标</th><th>失败表现</th><th>恢复方式</th></tr></thead><tbody>
+          <tr><td>首次打开列表</td><td>首屏接口 P95 ≤ 2 秒，列表分页 ≤ 20/50/100 条。</td><td>骨架屏；不显示虚假统计。</td><td>刷新或自动重试一次，保留查询条件。</td></tr>
+          <tr><td>规则保存</td><td>校验反馈 ≤ 1 秒；提交接口 P95 ≤ 3 秒。</td><td>字段级错误，保留用户输入。</td><td>修正后可重新保存，避免重复版本。</td></tr>
+          <tr><td>同步/导出</td><td>异步任务，前台不阻塞；支持轮询或推送。</td><td>显示任务失败原因和失败明细下载。</td><td>按任务幂等键重试。</td></tr>
+          <tr><td>规则并发编辑</td><td>保存时校验版本号。</td><td>提示“规则已被更新”，不可静默覆盖。</td><td>重新加载最新版本，用户选择合并或覆盖。</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="section" id="acceptance">
+        <h2>10. BDD 验收标准</h2>
+        <div class="table-wrap"><table><thead><tr><th>编号</th><th>场景</th><th>Given</th><th>When</th><th>Then</th></tr></thead><tbody>
+          <tr><td>AC-01</td><td>正向查询</td><td>用户拥有轨迹查看权限，选择正向物流。</td><td>填写物流商和平台单号并点击查询。</td><td>列表仅返回匹配包裹，状态统计、总数和分页由同一查询条件计算。</td></tr>
+          <tr><td>AC-02</td><td>方向切换</td><td>用户已填写公共筛选条件。</td><td>切换到逆向物流。</td><td>保留仓库/平台等公共条件，状态 Tab、表头、二级筛选和结果同步为逆向口径。</td></tr>
+          <tr><td>AC-03</td><td>异常筛选</td><td>存在多个异常类型包裹。</td><td>选择“包裹异常 → 丢件”。</td><td>只展示主异常标签为丢件或包含丢件命中的记录，列表显示异常原因。</td></tr>
+          <tr><td>AC-04</td><td>详情无逆向轨迹</td><td>正向包裹没有退件事件。</td><td>打开详情并切换逆向轨迹。</td><td>展示明确空状态和产生逆向轨迹的业务说明，不报错、不留白。</td></tr>
+          <tr><td>AC-05</td><td>同步失败重试</td><td>包裹同步任务失败且用户有重试权限。</td><td>点击重试两次。</td><td>只创建一个幂等任务；显示任务编号、失败原因和最新结果。</td></tr>
+          <tr><td>AC-06</td><td>关键词排除优先</td><td>某事件同时命中“派送成功”和排除词“退回”。</td><td>执行规则测试。</td><td>该事件不计入派送成功节点，并展示排除原因。</td></tr>
+          <tr><td>AC-07</td><td>按 N 条轨迹</td><td>规则配置上网取值为第 2 条。</td><td>输入 3 条按时间排序的事件测试。</td><td>第 2 条作为上网节点时间；测试结果列出事件顺序。</td></tr>
+          <tr><td>AC-08</td><td>异常优先级</td><td>一条事件命中丢件和派送失败两个标签。</td><td>执行识别。</td><td>按优先级生成一个主标签，同时保存两个命中标签供详情解释。</td></tr>
+          <tr><td>AC-09</td><td>无规则渠道</td><td>物流渠道没有启用规则。</td><td>同步承运商事件。</td><td>保留原始轨迹并标记未配置规则，不套用其他渠道规则；规则命中率指标可统计。</td></tr>
+          <tr><td>AC-10</td><td>导出权限</td><td>用户无导出权限。</td><td>访问导出入口或调用导出接口。</td><td>入口隐藏或禁用，接口返回无权限；不生成导出任务。</td></tr>
+          <tr><td>AC-11</td><td>审计追溯</td><td>规则发生关键词和启停变更。</td><td>管理员查看审计日志。</td><td>可看到操作者、时间、版本、变更前后摘要和生效结果。</td></tr>
+          <tr><td>AC-12</td><td>退款订单进入逆向队列</td><td>退款订单状态为“商品退回中”且退件物流单号非空。</td><td>订单同步或定时任务扫描订单。</td><td>生成唯一逆向拉取任务，记录平台、退款单、运单号和任务状态。</td></tr>
+          <tr><td>AC-13</td><td>不满足触发条件</td><td>订单状态不是“商品退回中”，或退件物流单号为空。</td><td>订单同步。</td><td>不调用平台逆向接口，不生成成功轨迹；页面给出未满足条件原因。</td></tr>
+          <tr><td>AC-14</td><td>退款订单查看轨迹</td><td>订单满足条件且已存在逆向轨迹快照。</td><td>用户点击退款订单列表中的退件物流单号。</td><td>打开逆向轨迹详情，展示标准节点、原始描述、最新更新时间和规则版本。</td></tr>
+          <tr><td>AC-15</td><td>首次点击触发拉取</td><td>订单满足条件但尚无轨迹快照。</td><td>用户点击退件物流单号。</td><td>打开加载态并提交幂等拉取任务；订单列表不被阻塞，任务完成后可刷新详情。</td></tr>
+          <tr><td>AC-16</td><td>逆向关键词识别</td><td>平台返回逆向原始事件，渠道存在启用规则。</td><td>拉取任务完成后执行解析。</td><td>按命中词/排除词清洗为退回中、退回签收或异常节点，并记录命中解释。</td></tr>
+          <tr><td>AC-17</td><td>重复事件去重</td><td>平台分页或消息重复返回同一事件。</td><td>系统写入轨迹。</td><td>原始事件只保留一份，更新时间可刷新，节点快照不重复计数。</td></tr>
+          <tr><td>AC-18</td><td>平台暂不支持</td><td>退款订单平台为 TikTok，暂无逆向接口。</td><td>订单进入扫描或用户点击运单号。</td><td>显示“平台暂未接入逆向轨迹”，不伪造成功；任务可查询待接入原因。</td></tr>
+          <tr><td>AC-19</td><td>平台接口失败</td><td>接口超时、限流或返回业务错误。</td><td>逆向拉取任务执行。</td><td>记录错误码和原始响应摘要，按策略重试；最终失败可人工重试，不改变退款状态。</td></tr>
+          <tr><td>AC-20</td><td>订单与轨迹中心一致</td><td>同一退件物流单号已完成逆向解析。</td><td>分别从退款订单和物流轨迹中心打开详情。</td><td>两处展示相同的标准节点、原始轨迹、更新时间和规则版本。</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="section" id="milestone">
+        <h2>11. 里程碑、接口边界与开放问题</h2>
+        <h3>11.1 里程碑</h3>
+        <div class="table-wrap"><table><thead><tr><th>阶段</th><th>交付内容</th><th>依赖</th><th>完成标准</th></tr></thead><tbody>
+          <tr><td>M0 逆向接入基线</td><td>确认退款状态、退件物流单号、平台店铺授权、接口字段和任务幂等键。</td><td>订单系统、平台连接、研发联调。</td><td>平台接口矩阵和字段映射评审通过。</td></tr>
+          <tr><td>M1 数据与状态基线</td><td>标准节点编码、方向/异常枚举、退款/退件/事件/快照模型、权限矩阵。</td><td>产品、后端、数据、业务确认。</td><td>状态机、字段字典和订单关联键评审通过。</td></tr>
+          <tr><td>M2 规则配置 P0</td><td>揽收取值设置、退回取值设置、包裹异常设置。</td><td>物流商/渠道主数据。</td><td>TR-003～TR-005 及对应规则识别验收通过。</td></tr>
+          <tr><td>M3 逆向拉取与轨迹中心 P0</td><td>退款订单触发、平台适配、原始轨迹落库、方向切换、筛选、统计、详情和订单物流单号联动。</td><td>逆向快照接口、数据权限、订单入口改造。</td><td>RO-001～RO-004、TC-001～TC-005、AC-01～AC-04、AC-12～AC-17、AC-20 通过。</td></tr>
+          <tr><td>M4 任务与审计 P1</td><td>同步/重试/导出任务、备注审计、操作日志、指标监控。</td><td>任务中心或统一异步任务服务。</td><td>TC-006～TC-007、AC-05、AC-10～AC-11 通过。</td></tr>
+          <tr><td>M5 规则测试 P1</td><td>规则测试区及命中节点、排除原因、异常标签的结果解释。</td><td>规则服务。</td><td>TR-007 及对应测试验收通过。</td></tr>
+        </tbody></table></div>
+        <h3>11.2 接口边界（建议契约）</h3>
+        <div class="table-wrap"><table><thead><tr><th>服务域</th><th>接口能力</th><th>输入</th><th>输出</th></tr></thead><tbody>
+          <tr><td>规则服务</td><td>列表、详情、创建、更新、复制、启停、删除/归档、规则测试、版本审计。</td><td>规则对象、版本号、测试事件。</td><td>规则版本、校验错误、命中解释、审计 ID。</td></tr>
+          <tr><td>轨迹查询服务</td><td>包裹分页、状态统计、详情、方向/异常筛选。</td><td>方向、筛选条件、分页、排序。</td><td>列表、总数、状态计数、字段字典、详情关联。</td></tr>
+          <tr><td>同步任务服务</td><td>批量同步、单包裹重试、任务状态、失败明细。</td><td>包裹 ID/跟踪号、幂等键、触发来源。</td><td>任务 ID、进度、结果、错误码。</td></tr>
+          <tr><td>审计服务</td><td>规则和页面操作日志查询。</td><td>操作者、时间范围、对象 ID、动作。</td><td>变更前后摘要、版本、结果。</td></tr>
+        </tbody></table></div>
+        <h3>11.3 评审必须决策项</h3>
+        <div class="table-wrap"><table><thead><tr><th>编号</th><th>问题</th><th>本稿默认建议</th><th>影响</th></tr></thead><tbody>
+          <tr><td>Q1</td><td>无渠道规则时是否继承物流商默认规则？</td><td>默认不继承，先标记未配置规则。</td><td>影响规则作用域、识别准确性和上线数据量。</td></tr>
+          <tr><td>Q2</td><td>规则保存是否需要审批后生效？</td><td>P0 直接生效，P1 支持审批发布。</td><td>影响版本状态和权限流程。</td></tr>
+          <tr><td>Q3</td><td>关键词匹配是否支持正则、同义词和多语言词库？</td><td>P0 仅普通字符串包含；正则和词库列为后续能力。</td><td>影响规则引擎复杂度和误命中风险。</td></tr>
+          <tr><td>Q4</td><td>历史包裹是否允许人工触发重算？</td><td>默认不回溯；管理员可按任务批量重算并产生新快照。</td><td>影响数据一致性、成本和审计。</td></tr>
+          <tr><td>Q5</td><td>逆向包裹与原正向包裹通过什么业务键关联？</td><td>售后单/原包裹 ID + 逆向运单号双键关联。</td><td>影响详情页、去重和退件仓处理。</td></tr>
+          <tr><td>Q6</td><td>预警天数以自然日还是工作日计算？</td><td>默认自然日，时区使用仓库所属时区。</td><td>影响时效统计和异常数量。</td></tr>
+          <tr><td>Q7</td><td>导出最大行数、文件有效期和脱敏规则是什么？</td><td>由统一导出服务和数据权限确定。</td><td>影响合规和任务容量。</td></tr>
+          <tr><td>Q8</td><td>异常标签是否允许业务自定义新标签？</td><td>P1 允许管理员新增；系统异常标签不可删除。</td><td>影响枚举管理和报表兼容。</td></tr>
+          <tr><td>Q9</td><td>规则测试样例由谁维护？</td><td>规则管理员维护渠道样例，系统保留最近测试结果。</td><td>影响上线前回归能力。</td></tr>
+          <tr><td>Q10</td><td>状态统计刷新频率和实时性要求是什么？</td><td>查询时实时计算快照统计；大盘类统计再走缓存。</td><td>影响接口性能和数据新鲜度。</td></tr>
+          <tr><td>Q11</td><td>退款订单进入“商品退回中”后多久拉取，首次回溯多长时间？</td><td>建议事件触发 + 每日补偿，首次查询回溯 30 天。</td><td>影响接口调用量、历史数据完整性和任务容量。</td></tr>
+          <tr><td>Q12</td><td>退款状态离开“商品退回中”后是否继续更新轨迹？</td><td>建议继续更新至退件签收或任务终态，超过 SLA 后停止自动拉取但保留手动刷新。</td><td>影响售后处理和包裹最终状态。</td></tr>
+          <tr><td>Q13</td><td>一个退款单存在多个退件物流单号如何展示？</td><td>建议按退件运单拆分轨迹，退款单详情聚合展示，并保留每个运单的独立状态。</td><td>影响数据模型、幂等和订单列表交互。</td></tr>
+          <tr><td>Q14</td><td>Lazada 和 eBay 是否已有可直接获取退件轨迹的详情字段/接口？</td><td>在平台联调前标记“部分可用”，不以退件订单列表代替轨迹事件。</td><td>影响平台 P0 范围和上线顺序。</td></tr>
+          <tr><td>Q15</td><td>逆向轨迹拉取成功但关键词未命中时，订单如何提示？</td><td>建议显示“已拉取、待配置规则”，原始轨迹仍可查看。</td><td>影响规则治理和客服解释。</td></tr>
+        </tbody></table></div>
+      </section>
+
+    </main>
+    <footer class="footer">逆向退件轨迹、物流轨迹规则与轨迹中心整合 PRD · 评审稿 · 2026-09-02</footer>
+  </div>
+</body>
+</html>
