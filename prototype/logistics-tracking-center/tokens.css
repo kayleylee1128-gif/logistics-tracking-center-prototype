@@ -13,9 +13,6 @@
   --color-error: #ff4d4f;
   --color-error-bg: #fff2f0;
   --color-error-border: #ffccc7;
-  --color-sider-bg: #001529;
-  --color-sider-text: rgba(255, 255, 255, 0.85);
-  --color-sider-text-secondary: rgba(255, 255, 255, 0.45);
   --color-text: rgba(0, 0, 0, 0.88);
   --color-text-secondary: rgba(0, 0, 0, 0.65);
   --color-text-tertiary: rgba(0, 0, 0, 0.45);
@@ -49,13 +46,10 @@
   --space-8: 32px;
   --radius-sm: 4px;
   --radius: 6px;
-  --radius-control: 6px;
   --radius-lg: 8px;
   --radius-pill: 999px;
   --shadow-1: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02);
   --shadow-2: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12);
-  --shadow-drawer: -6px 0 16px 0 rgba(0, 0, 0, 0.08);
-  --shadow-modal: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12);
   --layout-sider-width: 200px;
   --layout-sider-collapsed-width: 64px;
   --layout-header-height: 56px;
@@ -65,10 +59,7 @@
   --control-height: 32px;
   --control-height-lg: 40px;
   --motion: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --motion-fast: 100ms cubic-bezier(0.4, 0, 0.2, 1);
-  --motion-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
   --z-drawer: 900;
-  --z-modal: 1000;
   --z-tooltip: 1200;
 }
 
@@ -120,19 +111,6 @@ body {
   cursor: pointer;
   transition: all var(--motion);
 }
-.btn:disabled,
-.btn[aria-disabled="true"] {
-  background: var(--color-bg-disabled);
-  color: var(--color-text-disabled);
-  border-color: var(--color-border);
-  cursor: not-allowed;
-}
-.btn--solid.btn--color-primary { background: var(--color-primary-6); color: var(--color-text-on-primary); border-color: var(--color-primary-6); }
-.btn--text.btn--color-primary,
-.btn--link.btn--color-primary { color: var(--color-primary-6); border-color: transparent; background: transparent; }
-.btn--solid.btn--color-danger { background: var(--color-error); color: #fff; border-color: var(--color-error); }
-.btn--text:hover,
-.btn--link:hover { background: var(--color-bg-spotlight); }
 .btn--primary { background: var(--color-primary-6); color: #fff; border-color: var(--color-primary-6); }
 .btn--danger { background: var(--color-error); color: #fff; border-color: var(--color-error); }
 .btn--text { border-color: transparent; background: transparent; }

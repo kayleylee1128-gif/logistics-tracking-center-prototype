@@ -190,7 +190,7 @@ const parcels = [
   {
     id: 'ret1', direction: 'forward', status: 'return-progress', statusLabel: '退回中', statusTone: 'warning', returnType: '原包裹退回', returnStage: '退回中',
     packageNo: 'BO26070844219', orderNo: '平台单号 3075287610091182', warehouse: 'SZ01 深圳仓', platform: 'AliExpress', country: '英国', pickupTime: '2026-07-18 20:10',
-    carrier: 'Royal Mail', channel: 'RM-RETURN', logisticNo: 'BO26070844219', trackingNumber: 'RM771820456GB', trackingNo: 'RM771820456GB', latest: '原包裹退回运输中', latestTime: '2026-07-21 22:02', handover: '退回中', remark: '目的国拒收，等待原包裹退回',
+    carrier: 'Royal Mail', channel: 'RM-RETURN', logisticNo: 'BO26070844219', trackingNumber: 'RM771820456GB', trackingNo: 'RM771820456GB', latest: '原包裹退回运输中', latestTime: '2026-07-21 22:02', handover: '退回中', returnTime: '2026-07-20 11:30', returnSignTime: '—', remark: '目的国拒收，等待原包裹退回',
     timelineForward: [
       ['2026-07-21 22:02', '退回中', '英国 · 原包裹退回运输中'],
       ['2026-07-20 11:30', '退回', '英国 · 末端承运商发起退回']
@@ -199,21 +199,12 @@ const parcels = [
   {
     id: 'ret2', direction: 'forward', status: 'return-signed', statusLabel: '退回签收', statusTone: 'success', returnType: '客户退回', returnStage: '退回签收',
     packageNo: 'BO26070733064', orderNo: '平台单号 8212371048804921', warehouse: 'SZ01 深圳仓', platform: 'Amazon', country: '美国', pickupTime: '2026-07-17 08:42',
-    carrier: 'UPS', channel: 'UPS-RETURN', logisticNo: 'BO26070733064', trackingNumber: '1Z78A03X03912811', trackingNo: '1Z78A03X03912811', latest: '客户退回包裹已签收', latestTime: '2026-07-20 15:44', handover: '已退回仓库', remark: '客户退回，待仓库验收',
+    carrier: 'UPS', channel: 'UPS-RETURN', logisticNo: 'BO26070733064', trackingNumber: '1Z78A03X03912811', trackingNo: '1Z78A03X03912811', latest: '客户退回包裹已签收', latestTime: '2026-07-20 15:44', handover: '已退回仓库', returnTime: '2026-07-19 09:12', returnSignTime: '2026-07-20 15:44', remark: '客户退回，待仓库验收',
     timelineForward: [
       ['2026-07-20 15:44', '退回签收', '美国 · 退件仓已签收客户退回包裹'],
       ['2026-07-19 09:12', '客户退回', '美国 · 买家寄出退件']
     ], timelineReverse: []
   },
-  {
-    id: 'ret3', direction: 'forward', status: 'return-damaged-lost', statusLabel: '包裹异常', statusTone: 'error', returnType: '原包裹退回', returnStage: '包裹异常',
-    packageNo: 'BO26070622871', orderNo: '平台单号 3075260178239406', warehouse: 'AJL-US 美国仓', platform: 'Ebay', country: '美国', pickupTime: '2026-07-16 13:20',
-    carrier: 'FedEx', channel: 'FEDEX-RETURN', logisticNo: 'BO26070622871', trackingNumber: '781528110390', trackingNo: '781528110390', latest: '退回途中确认破损丢件', latestTime: '2026-07-18 08:21', handover: '需索赔', overdue: true, remark: '退回破损丢件，待物流商理赔',
-    timelineForward: [
-      ['2026-07-18 08:21', '退回破损丢件', '美国 · 原包裹退回途中确认破损且无法找回'],
-      ['2026-07-16 13:52', '退回中', '美国 · FedEx 退回运输']
-    ], timelineReverse: []
-  }
 ];
 
 const metricSets = {
@@ -235,7 +226,6 @@ let currentDirection = 'forward';
 let currentStatus = 'all';
 let currentExceptionReason = 'all';
 let currentReturnStage = 'all';
-let currentReturnType = 'all';
 let selectedParcel = null;
 let activeDrawerTab = 'forward';
 
@@ -256,12 +246,13 @@ function matchesKeyword(row) {
   return [row.packageNo, row.orderNo, row.trackingNo, row.latest].join(' ').toLowerCase().includes(keyword);
 }
 function matchesStatus(row) {
-  const matchesReturnFilters = currentDirection !== 'reverse' || ((currentReturnStage === 'all' || row.returnStage === currentReturnStage) && (currentReturnType === 'all' || row.returnType === currentReturnType));
+  const matchesReturnFilters = currentDirection !== 'reverse' || currentReturnStage === 'all' || row.returnStage === currentReturnStage;
   if (currentStatus === 'all') return matchesReturnFilters;
   if (currentStatus === 'return') return row.returnStage && (currentReturnStage === 'all' || row.returnStage === currentReturnStage);
-  if (currentStatus === 'exception') {
+  if (currentStatus === 'exception' || currentStatus === 'reverse-exception') {
     const exceptionType = row.exceptionType || row.exceptionReason || (row.systemError ? '轨迹同步失败' : '');
-    return (row.status === 'exception' || row.exceptionReason || row.exceptionType || row.systemError) && (currentExceptionReason === 'all' || exceptionType === currentExceptionReason);
+    const normalizedExceptionType = exceptionType === '丢件' || exceptionType === '破损' ? '破损丢件' : exceptionType;
+    return (row.status === 'exception' || row.exceptionReason || row.exceptionType || row.systemError) && (currentExceptionReason === 'all' || normalizedExceptionType === currentExceptionReason);
   }
   return row.status === currentStatus && matchesReturnFilters;
 }
@@ -281,6 +272,8 @@ function renderStatusTabs() {
   $$('#statusTabs .status-tab').forEach(tab => tab.addEventListener('click', () => {
     currentStatus = tab.dataset.status;
     if (currentDirection === 'exception' && currentStatus === 'sync-error') currentStatus = 'sync-error';
+    currentExceptionReason = 'all';
+    currentReturnStage = 'all';
     $$('#statusTabs .status-tab').forEach(item => item.classList.toggle('is-active', item === tab));
     renderStatusSubfilters();
     renderRows();
@@ -291,22 +284,29 @@ function renderStatusTabs() {
 function renderStatusSubfilters() {
   const container = $('#statusSubfilters');
   if (!container) return;
-  if (currentDirection === 'reverse') {
-    const types = [['all', '全部类型'], ['原包裹退回', '原包裹退回'], ['客户退回', '客户退回']];
+  if (currentDirection === 'reverse' && currentStatus === 'reverse-exception') {
+    const reasons = [['all', '全部类型', '2'], ['查不到轨迹', '查不到轨迹', '0'], ['轨迹同步失败', '轨迹同步失败', '0'], ['破损丢件', '破损丢件', '1'], ['派送失败', '派送失败', '1']];
     container.hidden = false;
-    container.innerHTML = `<div class="status-subfilters__row"><span class="status-subfilters__label">退回类型</span>${types.map(item => `<button class="subfilter-chip ${currentReturnType === item[0] ? 'is-active' : ''}" data-return-type="${item[0]}">${item[1]}</button>`).join('')}</div>`;
-    $$('#statusSubfilters [data-return-type]').forEach(button => button.addEventListener('click', () => { currentReturnType = button.dataset.returnType; renderStatusSubfilters(); renderRows(); }));
+    container.innerHTML = `<span class="status-subfilters__label">异常类型</span>${reasons.map(item => `<button class="subfilter-chip ${currentExceptionReason === item[0] ? 'is-active' : ''}" data-exception-reason="${item[0]}">${item[1]} <em>${item[2]}</em></button>`).join('')}`;
+    $$('#statusSubfilters [data-exception-reason]').forEach(button => button.addEventListener('click', () => { currentExceptionReason = button.dataset.exceptionReason; renderStatusSubfilters(); renderRows(); }));
     return;
   }
-  if (currentDirection === 'forward' && currentStatus === 'exception') {
-    const reasons = [['all', '全部类型', '34'], ['查不到轨迹', '查不到轨迹', '6'], ['派送失败', '派送失败', '7'], ['丢件', '丢件', '4'], ['破损', '破损', '5'], ['轨迹同步失败', '轨迹同步失败', '12']];
+  if (currentDirection === 'reverse') {
+    container.hidden = true;
+    container.innerHTML = '';
+    return;
+  }
+  if ((currentDirection === 'forward' && currentStatus === 'exception') || (currentDirection === 'reverse' && currentStatus === 'reverse-exception')) {
+    const reasons = currentDirection === 'reverse'
+      ? [['all', '全部类型', '2'], ['查不到轨迹', '查不到轨迹', '0'], ['轨迹同步失败', '轨迹同步失败', '0'], ['破损丢件', '破损丢件', '1'], ['派送失败', '派送失败', '1']]
+      : [['all', '全部类型', '34'], ['查不到轨迹', '查不到轨迹', '6'], ['轨迹同步失败', '轨迹同步失败', '12'], ['破损丢件', '破损丢件', '9'], ['派送失败', '派送失败', '7']];
     container.hidden = false;
     container.innerHTML = `<span class="status-subfilters__label">异常类型</span>${reasons.map(item => `<button class="subfilter-chip ${currentExceptionReason === item[0] ? 'is-active' : ''}" data-exception-reason="${item[0]}">${item[1]} <em>${item[2]}</em></button>`).join('')}`;
     $$('#statusSubfilters [data-exception-reason]').forEach(button => button.addEventListener('click', () => { currentExceptionReason = button.dataset.exceptionReason; renderStatusSubfilters(); renderRows(); }));
     return;
   }
   if (currentDirection !== 'reverse' && currentStatus === 'return') {
-    const stages = [['all', '全部退回节点'], ['退回中', '退回中'], ['退回签收', '退回签收'], ['包裹异常', '包裹异常']];
+    const stages = [['all', '全部退回节点'], ['退回中', '退回中'], ['退回签收', '退回签收']];
     container.hidden = false;
     container.innerHTML = `<div class="status-subfilters__row"><span class="status-subfilters__label">退回节点</span>${stages.map(item => `<button class="subfilter-chip ${currentReturnStage === item[0] ? 'is-active' : ''}" data-return-stage="${item[0]}">${item[1]}</button>`).join('')}</div>`;
     $$('#statusSubfilters [data-return-stage]').forEach(button => button.addEventListener('click', () => { currentReturnStage = button.dataset.returnStage; renderStatusSubfilters(); renderRows(); }));
@@ -319,21 +319,23 @@ function renderStatusSubfilters() {
 function renderRows() {
   const rows = parcels.filter(row => matchesDirection(row) && matchesKeyword(row) && (currentStatus === 'sync-error' ? row.systemError : matchesStatus(row)));
   const reverseView = currentDirection === 'reverse';
+  const forwardReturnView = currentDirection === 'forward' && currentStatus === 'return';
+  const showDirection = false;
   $('#tableHead').innerHTML = reverseView ? `<tr>
-    <th class="col-check"><input type="checkbox" aria-label="全选" /></th><th>仓库</th><th>平台</th><th>物流商</th><th>渠道</th><th>国家</th><th>平台单号</th><th>物流单号</th><th>当前节点</th><th>包裹异常类型</th><th>退回时间</th><th>签收时间</th><th>备注</th><th class="col-action">操作</th>
+    <th class="col-check"><input type="checkbox" aria-label="全选" /></th><th>仓库</th><th>平台</th><th>物流商</th><th>渠道</th><th>国家</th><th>平台单号</th><th>物流单号</th><th>当前节点</th><th>退回类型</th><th>包裹异常类型</th><th>退回时间</th><th>签收时间</th><th>备注</th><th class="col-action">操作</th>
   </tr>` : `<tr>
-    <th class="col-check"><input type="checkbox" aria-label="全选" /></th><th>仓库</th><th>平台</th><th>物流商</th><th>渠道</th><th>国家</th><th>平台单号</th><th>包裹号</th><th>物流单号</th><th>物流跟踪号</th><th class="col-track">最新轨迹信息</th><th>揽收时间</th><th>交运时间</th><th>上网时间</th><th>交航时间</th><th>到达目的国时间</th><th>签收时间</th><th>签收时效</th><th>备注</th><th class="col-action">操作</th>
+    <th class="col-check"><input type="checkbox" aria-label="全选" /></th><th>仓库</th><th>平台</th><th>物流商</th><th>渠道</th><th>国家</th><th>平台单号</th><th>包裹号</th><th>物流单号</th><th>物流跟踪号</th><th class="col-track">最新轨迹信息</th>${forwardReturnView ? '<th>退回时间</th><th>退回签收时间</th>' : '<th>揽收时间</th><th>交运时间</th><th>上网时间</th><th>交航时间</th><th>到达目的国时间</th><th>签收时间</th><th>签收时效</th>'}<th>备注</th><th class="col-action">操作</th>
   </tr>`;
-  $('#parcelRows').innerHTML = rows.length ? rows.map(row => reverseView ? renderReverseRow(row) : renderForwardRow(row)).join('') : `<tr><td colspan="${reverseView ? 14 : 20}"><div class="empty-reverse">未找到符合条件的包裹，请调整筛选条件。</div></td></tr>`;
+  $('#parcelRows').innerHTML = rows.length ? rows.map(row => reverseView ? renderReverseRow(row) : renderForwardRow(row)).join('') : `<tr><td colspan="${reverseView ? 15 : forwardReturnView ? 15 : 20}"><div class="empty-reverse">未找到符合条件的包裹，请调整筛选条件。</div></td></tr>`;
   const result = currentDirection === 'reverse' ? '共 30 条' : currentDirection === 'exception' ? '共 30 条' : currentDirection === 'forward' ? '共 609,716 条' : '共 609,746 条';
   $('#resultNote').textContent = result;
   $('#paginationTotal').textContent = result;
-  const scopeNote = $('#tableScopeNote');
-  if (scopeNote) scopeNote.textContent = `${reverseView ? '逆向物流' : '正向物流'} · 当前筛选结果`;
 }
 
 function renderForwardRow(row) {
   const nodeMeta = (row.exceptionType || row.exceptionReason) ? `<span class="cell-muted">异常类型：${row.exceptionType || row.exceptionReason}</span>` : '';
+  const forwardReturnView = currentDirection === 'forward' && currentStatus === 'return';
+  const returnTimes = forwardReturnView ? `<td>${row.returnTime || '—'}</td><td>${row.returnSignTime || '—'}</td>` : `<td>${row.pickupTime || '—'}</td><td>${row.shippingTime || '—'}</td><td>${row.onlineTime || '—'}</td><td>${row.deliveryTime || '—'}</td><td>${row.arrivesTime || '—'}</td><td>${row.signTime || '—'}</td><td><span class="${row.overdue ? 'track-error' : ''}">${row.days || row.handover || '—'}</span></td>`;
   return `<tr data-row-id="${row.id}">
     <td><input type="checkbox" data-action="select-row" data-id="${row.id}" aria-label="选择 ${row.packageNo}" /></td>
     <td><span>${row.warehouse}</span></td><td>${row.platform}</td><td><span>${row.carrier}</span></td><td><span>${row.channel}</span></td><td>${row.country}</td>
@@ -341,25 +343,25 @@ function renderForwardRow(row) {
     <td><span class="package-no link" data-action="open-drawer" data-id="${row.id}">${row.packageNo}</span></td>
     <td><span>${row.logisticNo || row.packageNo}</span></td><td><span>${row.trackingNumber || row.trackingNo}</span></td>
     <td><div class="track-main ${row.systemError ? 'track-error' : ''}"><span class="tag tag--${getStatusTone(row)}">${row.statusLabel}</span><span>${row.latest}</span></div>${nodeMeta}<span class="track-time">${row.latestTime}${row.systemError ? ' · 可重试' : ''}</span></td>
-    <td>${row.pickupTime || '—'}</td><td>${row.shippingTime || '—'}</td><td>${row.onlineTime || '—'}</td><td>${row.deliveryTime || '—'}</td><td>${row.arrivesTime || '—'}</td><td>${row.signTime || '—'}</td>
-    <td><span class="${row.overdue ? 'track-error' : ''}">${row.days || row.handover || '—'}</span></td>
+    ${returnTimes}
     <td><textarea class="remark-input" rows="2" maxlength="300" placeholder="请输入采购备注" data-action="remark-blur" data-id="${row.id}">${row.remark || ''}</textarea></td>
-    <td><button class="btn btn--text btn--color-primary btn--sm" data-action="open-drawer" data-id="${row.id}">查看轨迹</button>${row.systemError ? '<button class="btn btn--text btn--color-primary btn--sm" data-action="retry" data-id="' + row.id + '">重试</button>' : ''}</td>
+    <td><button class="btn btn--text btn--color-primary btn--sm" data-action="open-drawer" data-id="${row.id}">查看轨迹</button><button class="btn btn--text btn--color-primary btn--sm" data-action="sync" data-id="${row.id}">同步</button>${row.systemError ? '<button class="btn btn--text btn--color-primary btn--sm" data-action="retry" data-id="' + row.id + '">重试</button>' : ''}</td>
   </tr>`;
 }
 
 function renderReverseRow(row) {
   const returnTime = row.reverseReturnTime || row.reverseShippedTime || '—';
   const signTime = row.reverseSignTime || row.reverseInboundTime || '—';
+  const returnTypeTag = row.returnType ? `<span class="tag tag--processing">${row.returnType}</span>` : '—';
   return `<tr data-row-id="${row.id}">
     <td><input type="checkbox" data-action="select-row" data-id="${row.id}" aria-label="选择 ${row.packageNo}" /></td>
     <td>${row.warehouse}</td><td>${row.platform}</td><td>${row.carrier}</td><td>${row.channel}</td><td>${row.country}</td>
     <td><span class="cell-muted">${row.platformOrderNo || '—'}</span></td><td><span>${row.trackingNo}</span></td>
-    <td><span class="tag tag--${getStatusTone(row)}">${row.statusLabel}</span><span class="cell-muted">${row.latest}</span>${row.returnType ? `<span class="cell-muted">${row.returnType}</span>` : ''}</td>
-    <td>${row.exceptionType ? `<span class="tag tag--error">${row.exceptionType}</span>` : '—'}</td>
+    <td><span class="tag tag--${getStatusTone(row)}">${row.statusLabel}</span><span class="cell-muted">${row.latest}</span></td>
+    <td>${returnTypeTag}</td><td>${row.exceptionType ? `<span class="tag tag--error">${row.exceptionType}</span>` : '—'}</td>
     <td>${returnTime}</td><td>${signTime}</td>
     <td><textarea class="remark-input" rows="2" maxlength="300" placeholder="请输入采购备注" data-action="remark-blur" data-id="${row.id}">${row.remark || ''}</textarea></td>
-    <td><button class="btn btn--text btn--color-primary btn--sm" data-action="open-drawer" data-id="${row.id}">查看轨迹</button></td>
+    <td><button class="btn btn--text btn--color-primary btn--sm" data-action="open-drawer" data-id="${row.id}">查看轨迹</button><button class="btn btn--text btn--color-primary btn--sm" data-action="sync" data-id="${row.id}">同步</button></td>
   </tr>`;
 }
 
@@ -370,7 +372,7 @@ function renderPage() {
 
 function timelineHtml(events) {
   if (!events.length) return '<div class="empty-reverse">当前包裹尚未产生逆向物流轨迹。<br /><span class="cell-muted">退件申请后，系统将在此处展示逆向运输与处理节点。</span></div>';
-  return `<ul class="c-timeline">${events.map((event, index) => `<li class="c-timeline__item ${index === 0 ? 'is-latest' : ''}"><div class="c-timeline__time">${event[0]}</div><div class="c-timeline__title">${event[1]}</div><div class="c-timeline__detail">${event[2]}</div>${event[1].includes('失败') || event[1].includes('异常') ? '<div class="raw-event">系统建议：查看异常原因并重试轨迹同步或创建人工处理任务。</div>' : ''}</li>`).join('')}</ul>`;
+  return `<ul class="c-timeline">${events.map((event, index) => `<li class="c-timeline__item ${index === 0 ? 'is-latest' : ''}"><div class="c-timeline__time">${event[0]}</div><div class="c-timeline__title">${event[1]}</div>${event[1].includes('失败') || event[1].includes('异常') ? '<div class="raw-event">系统建议：查看异常原因并重试轨迹同步或创建人工处理任务。</div>' : ''}</li>`).join('')}</ul>`;
 }
 
 function renderDrawerBody(tab) {
@@ -378,13 +380,13 @@ function renderDrawerBody(tab) {
   if (tab === 'basic') {
     const returnTypeDesc = selectedParcel.direction === 'reverse' ? `<dt>退回类型</dt><dd>${selectedParcel.returnType || '—'}</dd>` : '';
     const platformOrderDesc = selectedParcel.direction === 'reverse' ? (selectedParcel.platformOrderNo || '—') : selectedParcel.orderNo;
-    $('#drawerBody').innerHTML = `<section class="drawer-section"><h3 class="drawer-section__title">包裹信息</h3><dl class="drawer-desc"><dt>包裹号</dt><dd>${selectedParcel.packageNo}</dd><dt>物流方向</dt><dd><span class="tag tag--${selectedParcel.direction === 'reverse' ? 'warning' : 'processing'}">${getDirectionLabel(selectedParcel.direction)}物流</span></dd><dt>平台单号</dt><dd>${platformOrderDesc}</dd><dt>物流单号</dt><dd>${selectedParcel.trackingNo}</dd><dt>仓库</dt><dd>${selectedParcel.warehouse}</dd><dt>平台</dt><dd>${selectedParcel.platform}</dd><dt>目的国家</dt><dd>${selectedParcel.country}</dd><dt>物流商</dt><dd>${selectedParcel.carrier}</dd><dt>物流渠道</dt><dd>${selectedParcel.channel}</dd><dt>当前节点</dt><dd>${selectedParcel.statusLabel}</dd><dt>异常原因</dt><dd>${selectedParcel.exceptionReason || '—'}</dd>${returnTypeDesc}<dt>最新更新时间</dt><dd>${selectedParcel.latestTime}</dd><dt>退件原因</dt><dd>${selectedParcel.reverseReason || '—'}</dd></dl></section><section class="drawer-section"><h3 class="drawer-section__title">数据说明</h3><div class="c-feedback"><div class="c-feedback__item info">轨迹展示为系统标准化节点，点击节点可查看承运商原始描述。</div></div></section>`;
+    $('#drawerBody').innerHTML = `<section class="drawer-section"><h3 class="drawer-section__title">包裹信息</h3><dl class="drawer-desc"><dt>包裹号</dt><dd>${selectedParcel.packageNo}</dd><dt>物流方向</dt><dd><span class="tag tag--${selectedParcel.direction === 'reverse' ? 'warning' : 'processing'}">${getDirectionLabel(selectedParcel.direction)}物流</span></dd><dt>平台单号</dt><dd>${platformOrderDesc}</dd><dt>物流单号</dt><dd>${selectedParcel.trackingNo}</dd><dt>仓库</dt><dd>${selectedParcel.warehouse}</dd><dt>平台</dt><dd>${selectedParcel.platform}</dd><dt>物流商</dt><dd>${selectedParcel.carrier}</dd><dt>物流渠道</dt><dd>${selectedParcel.channel}</dd><dt>当前节点</dt><dd>${selectedParcel.statusLabel}</dd>${returnTypeDesc}<dt>最新更新时间</dt><dd>${selectedParcel.latestTime}</dd></dl></section>`;
     return;
   }
   const isReverse = tab === 'reverse';
   const events = isReverse ? selectedParcel.timelineReverse : selectedParcel.timelineForward;
-  const alert = selectedParcel.overdue || selectedParcel.systemError || selectedParcel.exceptionReason || selectedParcel.exceptionType ? `<div class="drawer-alert ${selectedParcel.systemError || selectedParcel.exceptionReason === '丢件' || selectedParcel.exceptionReason === '破损' || selectedParcel.exceptionType || selectedParcel.returnStage === '包裹异常' ? 'drawer-alert--error' : ''}"><strong>${selectedParcel.systemError ? '同步异常' : selectedParcel.exceptionReason ? selectedParcel.exceptionReason : selectedParcel.exceptionType ? '包裹异常' : selectedParcel.returnStage === '包裹异常' ? '包裹异常' : '需要处理'}</strong><span>${selectedParcel.systemError ? '承运商接口返回异常，列表已隐藏技术堆栈。可点击底部“重试”重新获取轨迹。' : selectedParcel.exceptionReason === '派送失败' ? '重新派送成功后，包裹状态将回到“已签收”。' : selectedParcel.exceptionReason ? '请确认责任方并创建人工处理任务。' : selectedParcel.exceptionType === '妥投失败' ? '逆向包裹妥投失败，请联系承运商确认后续派送安排。' : selectedParcel.exceptionType === '破损丢件' ? '逆向包裹确认破损或丢件，请进入理赔流程。' : selectedParcel.returnStage === '包裹异常' ? '退回途中已确认破损或丢件，请进入理赔流程。' : '当前节点已超过预设时效，请确认责任方并创建处理任务。'}</span></div>` : '';
-  $('#drawerBody').innerHTML = `${alert}<section class="drawer-section"><h3 class="drawer-section__title">${isReverse ? '逆向物流节点' : '正向物流节点'}</h3>${timelineHtml(events)}</section><section class="drawer-section"><h3 class="drawer-section__title">标准化说明</h3><dl class="drawer-desc"><dt>标准状态</dt><dd>${selectedParcel.statusLabel}</dd><dt>承运商原始单号</dt><dd>${selectedParcel.trackingNo}</dd><dt>数据来源</dt><dd>${selectedParcel.carrier} API</dd><dt>同步时间</dt><dd>${selectedParcel.latestTime}</dd></dl></section>`;
+  const alert = selectedParcel.overdue || selectedParcel.systemError || selectedParcel.exceptionReason || selectedParcel.exceptionType ? `<div class="drawer-alert ${selectedParcel.systemError || selectedParcel.exceptionReason === '丢件' || selectedParcel.exceptionReason === '破损' || selectedParcel.exceptionType ? 'drawer-alert--error' : ''}"><strong>${selectedParcel.systemError ? '同步异常' : selectedParcel.exceptionReason ? selectedParcel.exceptionReason : selectedParcel.exceptionType ? '包裹异常' : '需要处理'}</strong><span>${selectedParcel.systemError ? '承运商接口返回异常，列表已隐藏技术堆栈。可点击重试重新获取轨迹。' : selectedParcel.exceptionReason === '派送失败' ? '重新派送成功后，包裹状态将回到“已签收”。' : selectedParcel.exceptionReason ? '请确认责任方并创建人工处理任务。' : selectedParcel.exceptionType === '妥投失败' ? '逆向包裹妥投失败，请联系承运商确认后续派送安排。' : selectedParcel.exceptionType === '破损丢件' ? '逆向包裹确认破损或丢件，请进入理赔流程。' : '当前节点已超过预设时效，请确认责任方并创建处理任务。'}</span></div>` : '';
+  $('#drawerBody').innerHTML = `${alert}<section class="drawer-section"><h3 class="drawer-section__title">${isReverse ? '逆向物流节点' : '正向物流节点'}</h3>${timelineHtml(events)}</section>`;
 }
 
 function openDrawer(id) {
@@ -393,7 +395,7 @@ function openDrawer(id) {
   activeDrawerTab = selectedParcel.direction === 'reverse' ? 'reverse' : 'forward';
   $('#drawerTitle').textContent = '物流轨迹';
   $('#drawerSubtitle').textContent = `${selectedParcel.packageNo} · ${selectedParcel.statusLabel}`;
-  $('#drawerMeta').innerHTML = `<span class="tag tag--${getStatusTone(selectedParcel)}">${getDirectionLabel(selectedParcel.direction)} · ${selectedParcel.statusLabel}</span><span>物流名称 <strong>${selectedParcel.carrier}</strong></span><span>物流单号 <strong>${selectedParcel.logisticNo || selectedParcel.trackingNo}</strong></span><span>目的国家 <strong>${selectedParcel.country}</strong></span><span>最后同步 <strong>${selectedParcel.latestTime}</strong></span>`;
+  $('#drawerMeta').innerHTML = `<span class="tag tag--${getStatusTone(selectedParcel)}">${getDirectionLabel(selectedParcel.direction)} · ${selectedParcel.statusLabel}</span><span>物流名称 <strong>${selectedParcel.carrier}</strong></span><span>物流单号 <strong>${selectedParcel.logisticNo || selectedParcel.trackingNo}</strong></span><span>最后同步 <strong>${selectedParcel.latestTime}</strong></span>`;
   $$('#drawerTabs .c-drawer__tab').forEach(tab => { tab.classList.toggle('is-active', tab.dataset.drawerTab === activeDrawerTab); tab.setAttribute('aria-selected', tab.dataset.drawerTab === activeDrawerTab ? 'true' : 'false'); });
   renderDrawerBody(activeDrawerTab);
   $('.c-drawer').dataset.open = 'true'; $('.c-drawer-mask').dataset.open = 'true';
@@ -401,9 +403,8 @@ function openDrawer(id) {
 
 function closeDrawer() { $('.c-drawer').dataset.open = 'false'; $('.c-drawer-mask').dataset.open = 'false'; }
 function showToast(message) { const toast = $('#toast'); toast.textContent = message; toast.classList.add('is-visible'); window.clearTimeout(showToast.timer); showToast.timer = window.setTimeout(() => toast.classList.remove('is-visible'), 1800); }
-
 $$('[data-direction]').forEach(button => button.addEventListener('click', () => {
-  currentDirection = button.dataset.direction; currentStatus = 'all'; currentExceptionReason = 'all'; currentReturnStage = 'all'; currentReturnType = 'all';
+  currentDirection = button.dataset.direction; currentStatus = 'all'; currentExceptionReason = 'all'; currentReturnStage = 'all';
   $$('[data-direction]').forEach(item => item.classList.toggle('is-active', item === button));
   renderPage();
 }));
@@ -414,18 +415,16 @@ document.addEventListener('click', event => {
   if (action === 'collapse') { const shell = $('.c-shell'); shell.dataset.collapsed = shell.dataset.collapsed === 'true' ? 'false' : 'true'; }
   if (action === 'open-drawer') openDrawer(id);
   if (action === 'close-drawer') closeDrawer();
-  if (action === 'sync' || action === 'refresh') showToast('轨迹同步任务已提交，列表将在完成后刷新');
+  if (action === 'sync') showToast('轨迹同步任务已提交，列表将在完成后刷新');
+  if (action === 'batch-sync') showToast('批量同步轨迹任务已提交，列表将在完成后刷新');
   if (action === 'export') showToast('已生成当前筛选条件下的导出任务');
   if (action === 'export-menu') showToast('导出选项：选中数据 / 当前条件');
   if (action === 'import') showToast('导入窗口已打开（支持物流轨迹模板）');
   if (action === 'remark-batch') showToast('请先勾选包裹，再批量修改采购备注');
   if (action === 'retry') showToast('已提交轨迹重试：' + id);
-  if (action === 'column-setting') showToast('列设置已打开（原型示意）');
-  if (action === 'drawer-action') showToast('已打开异常处理任务（原型示意）');
-  if (action === 'copy-no') { if (selectedParcel) navigator.clipboard?.writeText(selectedParcel.trackingNo); showToast('运单号已复制'); }
   if (action === 'toggle-more') { const filter = $('.c-filter'); filter.dataset.expanded = filter.dataset.expanded === 'true' ? 'false' : 'true'; event.target.textContent = filter.dataset.expanded === 'true' ? '收起筛选' : '更多筛选'; }
   if (action === 'search') { renderRows(); showToast('已按当前条件查询'); }
-  if (action === 'reset') { $('#keywordInput').value = ''; currentStatus = 'all'; currentExceptionReason = 'all'; currentReturnStage = 'all'; currentReturnType = 'all'; renderPage(); showToast('筛选条件已重置'); }
+  if (action === 'reset') { $('#keywordInput').value = ''; currentStatus = 'all'; currentExceptionReason = 'all'; currentReturnStage = 'all'; renderPage(); showToast('筛选条件已重置'); }
 });
 
 $('#keywordInput').addEventListener('keydown', event => { if (event.key === 'Enter') renderRows(); });
