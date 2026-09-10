@@ -28,12 +28,14 @@ function createSpecialNodeRule(includeKeywords = [], excludeKeywords = []) {
 
 const returnNodeIds = ['returning', 'return-received'];
 const exceptionTagSeed = [
-  { id: 'delivery-failed', name: '派送失败', includeKeywords: ['派送失败', 'delivery failed', 'attempted delivery'], excludeKeywords: ['已签收', 'delivered'] },
-  { id: 'package-lost', name: '丢件', includeKeywords: ['丢件', 'lost', 'missing package'], excludeKeywords: ['找到包裹', 'located'] }
+  { id: 'no-tracking', name: '查不到轨迹' },
+  { id: 'tracking-sync-failed', name: '轨迹同步失败' },
+  { id: 'package-damaged-lost', name: '破损丢件' },
+  { id: 'delivery-failed', name: '派送失败' }
 ];
 
 function createExceptionTags() {
-  return exceptionTagSeed.map((tag) => ({ ...tag, includeKeywords: [...tag.includeKeywords], excludeKeywords: [...tag.excludeKeywords] }));
+  return exceptionTagSeed.map((tag) => ({ ...tag, includeKeywords: [], excludeKeywords: [] }));
 }
 
 function createSpecialConfig() {
@@ -75,8 +77,7 @@ const commonNodes = [
   { id: 'returning', name: '退回中', code: 'RETURNING', direction: '正向 / 逆向', phase: '退回', description: '包裹正在退回途中，尚未完成退件仓签收。', terminal: '否', enabled: '启用', updatedAt: '2026-07-22 10:18', operator: 'Fiona' },
   { id: 'return-received', name: '退回签收', code: 'RETURN_RECEIVED', direction: '逆向', phase: '退回', description: '退件仓已收到退回包裹，可进入后续入库或质检流程。', terminal: '是', enabled: '启用', updatedAt: '2026-07-22 10:18', operator: 'Fiona' },
   { id: 'package-exception', name: '包裹异常', code: 'PACKAGE_EXCEPTION', direction: '正向 / 逆向', phase: '异常', description: '包裹发生需要运营关注的异常，具体异常类型通过标签细分。', terminal: '否', enabled: '启用', updatedAt: '2026-08-08 10:54', operator: 'Fiona' },
-  { id: 'package-lost', name: '丢件', code: 'PACKAGE_LOST', direction: '正向 / 逆向', phase: '异常', description: '承运商确认包裹丢失或无法找回。', terminal: '是', enabled: '启用', updatedAt: '2026-07-21 16:42', operator: 'Fiona' },
-  { id: 'package-damaged', name: '破损', code: 'PACKAGE_DAMAGED', direction: '正向 / 逆向', phase: '异常', description: '承运商或仓库确认包裹外包装或商品破损。', terminal: '是', enabled: '启用', updatedAt: '2026-07-21 16:42', operator: 'Fiona' },
+  { id: 'package-damaged-lost', name: '破损丢件', code: 'PACKAGE_DAMAGED_LOST', direction: '正向 / 逆向', phase: '异常', description: '承运商或仓库确认包裹破损、丢失或无法找回。', terminal: '是', enabled: '启用', updatedAt: '2026-07-21 16:42', operator: 'Fiona' },
   { id: 'delivery-failed', name: '派送失败', code: 'DELIVERY_FAILED', direction: '正向', phase: '异常', description: '末端派送未成功，需重新派送或人工处理。', terminal: '否', enabled: '启用', updatedAt: '2026-07-21 16:42', operator: 'Fiona' }
 ];
 
@@ -92,13 +93,22 @@ function ensureSpecialConfig(config) {
   });
   delete config.returnNodes['package-exception'];
   if (config.exceptionTags && !Array.isArray(config.exceptionTags) && Array.isArray(config.exceptionTags.tags)) config.exceptionTags = config.exceptionTags.tags;
-  config.exceptionTags = Array.isArray(config.exceptionTags)
-    ? config.exceptionTags.filter((tag) => tag && !['no-tracking', 'tracking-sync-failed'].includes(tag.id)).map((tag) => ({
-      ...tag,
-      includeKeywords: Array.isArray(tag.includeKeywords) ? tag.includeKeywords : [],
-      excludeKeywords: Array.isArray(tag.excludeKeywords) ? tag.excludeKeywords : []
-    }))
-    : seed.exceptionTags;
+  const existingTags = Array.isArray(config.exceptionTags) ? config.exceptionTags : [];
+  const normalizedTags = new Map();
+  existingTags.filter(Boolean).forEach((tag) => {
+    const isDamagedLost = ['package-lost', 'package-damaged', 'package-damaged-lost'].includes(tag.id) || ['丢件', '破损', '破损丢件'].includes(tag.name);
+    const id = isDamagedLost ? 'package-damaged-lost' : tag.id;
+    const name = id === 'package-damaged-lost' ? '破损丢件' : tag.name;
+    const current = normalizedTags.get(id) || { id, name, includeKeywords: [], excludeKeywords: [] };
+    current.includeKeywords = [...new Set([...current.includeKeywords, ...(Array.isArray(tag.includeKeywords) ? tag.includeKeywords : [])])];
+    current.excludeKeywords = [...new Set([...current.excludeKeywords, ...(Array.isArray(tag.excludeKeywords) ? tag.excludeKeywords : [])])];
+    normalizedTags.set(id, current);
+  });
+  config.exceptionTags = exceptionTagSeed.map((tag) => ({
+    ...tag,
+    includeKeywords: normalizedTags.get(tag.id)?.includeKeywords || [],
+    excludeKeywords: normalizedTags.get(tag.id)?.excludeKeywords || []
+  }));
   return config;
 }
 
@@ -109,8 +119,6 @@ let filterState = { carrier: '全部物流商', channel: '全部物流渠道', q
 let annotationMode = true;
 let annotationFilter = '全部';
 let activeAnnotationId = null;
-let draftExceptionTag = null;
-
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const keywordInput = (value) => [...new Set(String(value || '').split(/[，,\n]/).map((item) => item.trim()).filter(Boolean))];
@@ -146,7 +154,7 @@ const annotations = [
   { id: 5, type: '规则', title: '取值与预警', target: 'ruleFooter', description: '揽收、上网、交航、到达目的国、签收分别配置轨迹判断方式；预警天数按当前时间与交运时间的差值判断，历史结果不回溯。' },
   { id: 6, type: '页面', title: '揽收取值设置', target: 'trackConfigPanel', description: '揽收作为独立物流节点配置，沿用上网取值设置的轨迹数量、关键词和排除关键词规则；入口位于编辑规则弹窗页签。' },
   { id: 7, type: '页面', title: '退回取值设置', target: 'returnConfigPanel', description: '退回节点按退回中、退回签收两个二次节点直接配置渠道关键词；包裹异常在独立页签配置标签。' },
-  { id: 8, type: '规则', title: '包裹异常标签', target: 'exceptionConfigPanel', description: '包裹异常下仅维护派送失败和丢件标签关键词；系统级异常状态由开发侧处理。' },
+  { id: 8, type: '规则', title: '包裹异常设置', target: 'exceptionConfigPanel', description: '固定维护查不到轨迹、轨迹同步失败、破损丢件和派送失败四类异常的命中关键词与排除关键词。' },
   { id: 9, type: '待确认', title: '异常标签触发条件', target: 'exceptionConfigPanel', description: '待确认：开发侧系统异常状态的判定阈值和标签写入时机。' }
 ];
 
@@ -250,14 +258,9 @@ function renderExceptionTags(items) {
   return items.map((tag, index) => `<article class="exception-tag-card"><div class="exception-tag-card__head"><strong>${tag.name}</strong></div><div class="special-keyword-row"><span>命中关键词</span><input class="input" id="exceptionInclude-${index}" placeholder="请输入承运商状态词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-keyword" data-kind="include" data-index="${index}">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(tag.includeKeywords, 'exception-include', String(index))}</div><div class="special-keyword-row"><span>排除关键词</span><input class="input" id="exceptionExclude-${index}" placeholder="请输入排除词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-keyword" data-kind="exclude" data-index="${index}">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(tag.excludeKeywords, 'exception-exclude', String(index))}</div></article>`).join('');
 }
 
-function renderExceptionTagDraft() {
-  if (!draftExceptionTag) return '';
-  return `<article class="exception-tag-card exception-tag-card--draft"><div class="exception-tag-card__head"><strong>新增异常标签</strong></div><div class="exception-tag-name-row"><span>标签名称</span><input class="input" id="exceptionDraftName" placeholder="请输入标签名称" value="${draftExceptionTag.name}" /></div><div class="special-keyword-row"><span>命中关键词</span><input class="input" id="exceptionDraftInclude" placeholder="请输入承运商状态词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-draft-keyword" data-kind="include">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(draftExceptionTag.includeKeywords, 'draft-include')}</div><div class="special-keyword-row"><span>排除关键词</span><input class="input" id="exceptionDraftExclude" placeholder="请输入排除词" /><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-draft-keyword" data-kind="exclude">添加</button></div><div class="config-keyword-list special-keyword-list">${renderSpecialTags(draftExceptionTag.excludeKeywords, 'draft-exclude')}</div><div class="exception-tag-form-actions"><button class="btn btn--sm" type="button" data-action="cancel-exception-tag">取消</button><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="save-exception-tag">保存标签</button></div></article>`;
-}
-
 function renderExceptionConfig(config) {
   ensureSpecialConfig(config);
-  return `<section class="special-config-panel" id="exceptionConfigPanel" data-annotation-target="exceptionConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">包裹异常标签规则</div></div><button class="btn btn--solid btn--color-primary btn--sm" type="button" data-action="add-exception-tag">添加标签</button></div>${renderExceptionTagDraft()}${renderExceptionTags(config.exceptionTags)}</section>`;
+  return `<section class="special-config-panel" id="exceptionConfigPanel" data-annotation-target="exceptionConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">包裹异常设置</div><p>维护查不到轨迹、轨迹同步失败、破损丢件、派送失败的命中关键词和排除关键词。</p></div></div>${renderExceptionTags(config.exceptionTags)}</section>`;
 }
 
 function renderConfigPanel() {
@@ -404,33 +407,6 @@ document.addEventListener('click', (event) => {
     input.value = '';
     renderConfigPanel();
   }
-  if (action === 'add-exception-tag') {
-    draftExceptionTag = { name: '', includeKeywords: [], excludeKeywords: [] };
-    renderConfigPanel();
-  }
-  if (action === 'add-exception-draft-keyword') {
-    const kind = event.target.closest('[data-kind]').dataset.kind;
-    const input = $(`#exceptionDraft${kind === 'include' ? 'Include' : 'Exclude'}`);
-    const value = input?.value.trim();
-    if (!value || !draftExceptionTag) return;
-    draftExceptionTag.name = $('#exceptionDraftName')?.value.trim() || draftExceptionTag.name;
-    draftExceptionTag[`${kind}Keywords`].push(value);
-    input.value = '';
-    renderConfigPanel();
-  }
-  if (action === 'cancel-exception-tag') {
-    draftExceptionTag = null;
-    renderConfigPanel();
-  }
-  if (action === 'save-exception-tag') {
-    const name = $('#exceptionDraftName')?.value.trim();
-    if (!draftExceptionTag || !name) { showToast('请输入标签名称'); return; }
-    if (currentConfig().exceptionTags.some((tag) => tag.name === name)) { showToast('标签名称不能重复'); return; }
-    currentConfig().exceptionTags.push({ id: `custom-${Date.now()}`, name, includeKeywords: [...draftExceptionTag.includeKeywords], excludeKeywords: [...draftExceptionTag.excludeKeywords] });
-    draftExceptionTag = null;
-    renderConfigPanel();
-    showToast('异常标签已添加');
-  }
   if (action === 'remove-keyword') {
     const target = event.target.closest('[data-action="remove-keyword"]');
     const kind = target.dataset.kind;
@@ -443,10 +419,6 @@ document.addEventListener('click', (event) => {
       const index = Number(target.dataset.nodeId);
       const key = kind === 'exception-include' ? 'includeKeywords' : 'excludeKeywords';
       currentConfig().exceptionTags[index][key].splice(Number(target.dataset.index), 1);
-      renderConfigPanel();
-    } else if (kind.startsWith('draft-')) {
-      const key = kind === 'draft-include' ? 'includeKeywords' : 'excludeKeywords';
-      if (draftExceptionTag) draftExceptionTag[key].splice(Number(target.dataset.index), 1);
       renderConfigPanel();
     } else {
       const list = currentConfig().phases[activeConfigTab][kind === 'include' ? 'includeKeywords' : 'excludeKeywords'];
