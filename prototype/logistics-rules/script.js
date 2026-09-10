@@ -28,8 +28,6 @@ function createSpecialNodeRule(includeKeywords = [], excludeKeywords = []) {
 
 const returnNodeIds = ['returning', 'return-received'];
 const exceptionTagSeed = [
-  { id: 'no-tracking', name: '查不到轨迹' },
-  { id: 'tracking-sync-failed', name: '轨迹同步失败' },
   { id: 'package-damaged-lost', name: '破损丢件' },
   { id: 'delivery-failed', name: '派送失败' }
 ];
@@ -154,7 +152,7 @@ const annotations = [
   { id: 5, type: '规则', title: '取值与预警', target: 'ruleFooter', description: '揽收、上网、交航、到达目的国、签收分别配置轨迹判断方式；预警天数按当前时间与交运时间的差值判断，历史结果不回溯。' },
   { id: 6, type: '页面', title: '揽收取值设置', target: 'trackConfigPanel', description: '揽收作为独立物流节点配置，沿用上网取值设置的轨迹数量、关键词和排除关键词规则；入口位于编辑规则弹窗页签。' },
   { id: 7, type: '页面', title: '退回取值设置', target: 'returnConfigPanel', description: '退回节点按退回中、退回签收两个二次节点直接配置渠道关键词；包裹异常在独立页签配置标签。' },
-  { id: 8, type: '规则', title: '包裹异常设置', target: 'exceptionConfigPanel', description: '固定维护查不到轨迹、轨迹同步失败、破损丢件和派送失败四类异常的命中关键词与排除关键词。' },
+  { id: 8, type: '规则', title: '包裹异常设置', target: 'exceptionConfigPanel', description: '固定维护破损丢件和派送失败两类异常的命中关键词与排除关键词。' },
   { id: 9, type: '待确认', title: '异常标签触发条件', target: 'exceptionConfigPanel', description: '待确认：开发侧系统异常状态的判定阈值和标签写入时机。' }
 ];
 
@@ -260,7 +258,7 @@ function renderExceptionTags(items) {
 
 function renderExceptionConfig(config) {
   ensureSpecialConfig(config);
-  return `<section class="special-config-panel" id="exceptionConfigPanel" data-annotation-target="exceptionConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">包裹异常设置</div><p>维护查不到轨迹、轨迹同步失败、破损丢件、派送失败的命中关键词和排除关键词。</p></div></div>${renderExceptionTags(config.exceptionTags)}</section>`;
+  return `<section class="special-config-panel" id="exceptionConfigPanel" data-annotation-target="exceptionConfigPanel"><div class="special-config-panel__head"><div><div class="config-section__title">包裹异常设置</div><p>维护破损丢件、派送失败的命中关键词和排除关键词。</p></div></div>${renderExceptionTags(config.exceptionTags)}</section>`;
 }
 
 function renderConfigPanel() {
